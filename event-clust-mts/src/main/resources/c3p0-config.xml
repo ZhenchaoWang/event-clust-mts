@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c3p0-config>
+<!--
+  <default-config>
+    <property name="automaticTestTable">con_test</property>
+    <property name="checkoutTimeout">30000</property>
+    <property name="idleConnectionTestPeriod">30</property>
+    <property name="initialPoolSize">10</property>
+    <property name="maxIdleTime">30</property>
+    <property name="maxPoolSize">100</property>
+    <property name="minPoolSize">10</property>
+    <property name="maxStatements">200</property>
+
+    <user-overrides user="test-user">
+      <property name="maxPoolSize">10</property>
+      <property name="minPoolSize">1</property>
+      <property name="maxStatements">0</property>
+    </user-overrides>
+
+  </default-config>
+-->
+
+  <!-- This app is massive! -->
+  <named-config name="localhost-3306-google_vec">    
+    <property name="driverClass">com.mysql.jdbc.Driver</property>
+    <property name="jdbcUrl">jdbc:mysql://119.254.110.32:3223/google_vec?characterEncoding=utf8&amp;autoReconnect=true&amp;failOverReadOnly=false&amp;zeroDateTimeBehavior=convertToNull</property>
+    <property name="user">root</property>
+    <property name="password">693559wzc</property>     
+    <property name="acquireIncrement">5</property>
+    <property name="initialPoolSize">10</property>
+    <property name="acquireRetryAttempts">10</property>
+    <property name="acquireRetryDelay">3000</property>
+    <property name="minPoolSize">1</property>
+    <property name="maxPoolSize">100</property>
+    <property name="maxIdleTime">60</property>
+  </named-config>
+  
+  <named-config name="localhost-3306-user_vec">    
+    <property name="driverClass">com.mysql.jdbc.Driver</property>
+    <property name="jdbcUrl">jdbc:mysql://localhost:3306/user_vec?characterEncoding=utf8&amp;autoReconnect=true&amp;failOverReadOnly=false&amp;zeroDateTimeBehavior=convertToNull</property>
+    <property name="user">root</property>
+    <property name="password">693559wzc</property>     
+    <property name="acquireIncrement">5</property>
+    <property name="initialPoolSize">10</property>
+    <property name="acquireRetryAttempts">10</property>
+    <property name="acquireRetryDelay">3000</property>
+    <property name="minPoolSize">1</property>
+    <property name="maxPoolSize">100</property>
+    <property name="maxIdleTime">60</property>
+  </named-config>
+  
+  <named-config name="localhost-3306-rouge_eval">    
+    <property name="driverClass">com.mysql.jdbc.Driver</property>
+    <property name="jdbcUrl">jdbc:mysql://localhost:3306/rouge_eval?characterEncoding=utf8&amp;autoReconnect=true&amp;failOverReadOnly=false&amp;zeroDateTimeBehavior=convertToNull</property>
+    <property name="user">root</property>
+    <property name="password">693559wzc</property>     
+    <property name="acquireIncrement">5</property>
+    <property name="initialPoolSize">10</property>
+    <property name="acquireRetryAttempts">10</property>
+    <property name="acquireRetryDelay">3000</property>
+    <property name="minPoolSize">1</property>
+    <property name="maxPoolSize">100</property>
+    <property name="maxIdleTime">60</property>
+  </named-config>
+  
+</c3p0-config>
