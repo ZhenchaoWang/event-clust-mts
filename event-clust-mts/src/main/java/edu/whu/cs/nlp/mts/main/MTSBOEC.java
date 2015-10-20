@@ -23,7 +23,7 @@ import edu.whu.cs.nlp.mts.sys.SystemConstant;
 
 /**
  * 驱动类
- * @author Apache_xiaochao
+ * @author ZhenchaoWang 2015-10-20 10:55:06
  *
  */
 public class MTSBOEC implements SystemConstant{
@@ -47,7 +47,7 @@ public class MTSBOEC implements SystemConstant{
             properties.load(new FileInputStream(propFilePath));
         } catch (final IOException e) {
             log.error("load properties failed!", e);
-            //e.printStackTrace();
+            return;
         }
 
         //获取线程数
@@ -55,8 +55,8 @@ public class MTSBOEC implements SystemConstant{
         final String textDir = properties.getProperty("textDir");
         final String workDir = properties.getProperty("workDir");
 
-        /*
-         * 进行事件抽取
+        /**
+         * 执行事件抽取操作
          */
         if("y".equalsIgnoreCase(properties.getProperty("isExtractEvent"))){
             log.info("正在进行事件提取..." + textDir);
@@ -89,7 +89,7 @@ public class MTSBOEC implements SystemConstant{
             log.info("不启用事件抽取！");
         }
 
-        /*
+        /**
          * 计算事件之间的相似度
          */
         final int nThreadSimiarity =
@@ -127,7 +127,7 @@ public class MTSBOEC implements SystemConstant{
             log.info("不启用事件相似度计算!");
         }
 
-        /*
+        /**
          * 对事件进行聚类，同时按类别抽取时间所在子句
          */
         if("y".equalsIgnoreCase(properties.getProperty("isEventCluster"))){
