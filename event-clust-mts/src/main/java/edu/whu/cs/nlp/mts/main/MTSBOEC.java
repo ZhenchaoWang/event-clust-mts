@@ -59,7 +59,7 @@ public class MTSBOEC implements SystemConstant{
          * 执行事件抽取操作
          */
         if("y".equalsIgnoreCase(properties.getProperty("isExtractEvent"))){
-            log.info("正在进行事件提取..." + textDir);
+            log.info(">>event extracting: " + textDir);
             final File dirFile = new File(textDir);
             final String[] dirs = dirFile.list();
             final List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>();
@@ -78,7 +78,7 @@ public class MTSBOEC implements SystemConstant{
                     }
 
                 } catch (InterruptedException | ExecutionException e) {
-                    log.error("事件抽取任务组异常", e);
+                    log.error("There is an exception when extract events!", e);
                     //e.printStackTrace();
                 } finally{
                     executorService.shutdown();
@@ -86,7 +86,7 @@ public class MTSBOEC implements SystemConstant{
             }
 
         }else{
-            log.info("不启用事件抽取！");
+            log.info("Events extracting is not enabled!");
         }
 
         /**
@@ -95,7 +95,7 @@ public class MTSBOEC implements SystemConstant{
         final int nThreadSimiarity =
                 Integer.parseInt(properties.getProperty("nThreadSimiarity"));  //计算事件相似度的线程数量
         if("y".equalsIgnoreCase(properties.getProperty("isCalculateSimilarity"))){
-            log.info("正在计算事件相似度...");
+            log.info(">> calculating events similarity");
             final String cacheName = properties.getProperty("cacheName");
             final int dimension = Integer.parseInt(properties.getProperty("dimension", "300"));
             final String datasource = properties.getProperty("datasource");
@@ -117,21 +117,21 @@ public class MTSBOEC implements SystemConstant{
                         }
                     }
                 } catch (InterruptedException | ExecutionException e) {
-                    log.error("相似度计算任务组异常", e);
+                    log.error("There is an exception when calculate events similarity!", e);
                     //e.printStackTrace();
                 }finally{
                     executorService.shutdown();
                 }
             }
         }else{
-            log.info("不启用事件相似度计算!");
+            log.info("Events similarity calculate is not enabled!");
         }
 
         /**
          * 对事件进行聚类，同时按类别抽取时间所在子句
          */
         if("y".equalsIgnoreCase(properties.getProperty("isEventCluster"))){
-            log.info("正在进行事件聚类和子句抽取...");
+            log.info(">> events clusting & sub sentences extracting");
             final String nodesDir = workDir + "/" + DIR_NODES;
             final String edgeDir = workDir + "/" + DIR_EDGES;
             final String clustResultDir = workDir + "/" + DIR_CW_RESULT;
@@ -163,12 +163,12 @@ public class MTSBOEC implements SystemConstant{
                 //获取事件对应的句子
                 cluster.clusterSentencesByEvents();
             } catch (IOException | InterruptedException e) {
-                log.error("事件聚类出错！", e);
+                log.error("There is an exception when calculate events clusting!", e);
                 //e.printStackTrace();
             }
 
         }else{
-            log.info("不启用事件聚类和子句抽取!");
+            log.info("Events clusting is not enabled!");
         }
 
     }

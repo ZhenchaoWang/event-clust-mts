@@ -28,14 +28,19 @@ public interface SystemConstant {
     public final static String      WORD_ATTRBUTE_CONNECTOR         = "__";
 
     /**
-     * 经过句子切分之后的文本所存放的目录名
+     * 经过句子切分之后的文本所存放的目录
      */
     public final static String      DIR_TEXT                        = "seg_text";
 
     /**
-     * 经过句子切分之后的文本详细信息存放的目录名
+     * 经过指代消解之后的文本所存放的目录名
      */
-    public final static String      DIR_TEXT_DETAIL                 = "seg_text_detail";
+    public final static String      DIR_CR_TEXT                     = "cr_seg_text";
+
+    /**
+     * 经过指代消解之后的文本详细信息存放的目录名
+     */
+    public final static String      DIR_CR_TEXT_DETAIL              = "cr_seg_text_detail";
 
     /**
      * 依存分析结果存放目录名

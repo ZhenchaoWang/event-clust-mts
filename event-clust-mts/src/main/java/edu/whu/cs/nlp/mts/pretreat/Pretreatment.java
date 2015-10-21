@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +39,22 @@ import edu.whu.cs.nlp.mts.utils.FileUtil;
  */
 public class Pretreatment implements SystemConstant {
 
-    private Logger   log = LoggerFactory.getLogger(this.getClass());
+    /**
+     * 获取句子切分文本的key
+     */
+    public static final String KEY_SEG_TEXT = "key_seg_text";
+    /**
+     * 获取指代消解文本的key
+     */
+    public static final String KEY_CR_TEXT = "key_cr_text";
 
+    private final Logger   log = LoggerFactory.getLogger(this.getClass());
+
+    /**
+     * 测试驱动类
+     * @param args
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
         final Pretreatment pret = new Pretreatment();
         final String text = FileUtil.read("F:/test/text/D0745J/APW19981217.0770", Charset.forName("UTF-8"));
@@ -59,19 +74,25 @@ public class Pretreatment implements SystemConstant {
      * @param input
      * @return
      */
-    public String coreferenceResolution(String input) {
-        String afterCoref = input;
+    public Map<String, String> coreferenceResolution(String input) {
+        final Map<String, String> result = new HashMap<String, String>();
+        //String afterCoref = input;
         if (input != null && !"".equals(input.trim())) {
             final Annotation document = new Annotation(input);
             this.pipeline.annotate(document);
 
             // 获取按行切分后的句子
+            final StringBuilder sb = new StringBuilder();  // 存放分割但未指代消解的句子
             final List<CoreMap> sentences = document.get(SentencesAnnotation.class);
             final List<String> strSentences = new ArrayList<String>();
             for (final CoreMap sentence : sentences) {
-                strSentences
-                .add(sentence.toString().replaceAll("\n", " ").replaceAll("\r\n", " ").replaceAll("\\s+", " "));
+                final String sent = sentence.toString().replaceAll("\n", " ").replaceAll("\r\n", " ").replaceAll("\\s+", " ");
+                sb.append(sent + LINE_SPLITER);
+                strSentences.add(sent);
             }
+
+            // 封装句子切分之后的内容
+            result.put(KEY_SEG_TEXT, CommonUtil.cutLastLineSpliter(sb.toString()));
 
             /*
              * 获取输入文本中的指代链，并执行指代消解
@@ -128,9 +149,10 @@ public class Pretreatment implements SystemConstant {
             for (final String sentence : strSentences) {
                 text.append(sentence + LINE_SPLITER);
             }
-            afterCoref = CommonUtil.cutLastLineSpliter(text.toString());
+            // 封装指代消极的结果内容
+            result.put(KEY_CR_TEXT, CommonUtil.cutLastLineSpliter(text.toString()));
         }
-        return afterCoref;
+        return result;
     }
 
     /**
@@ -157,7 +179,7 @@ public class Pretreatment implements SystemConstant {
             try {
                 br = new BufferedReader(
                         new InputStreamReader(new FileInputStream(edgeDir + "/" + filename), DEFAULT_CHARSET));
-                log.info("Pretreating for chinese whispers:" + edgeDir + "/" + filename);
+                this.log.info("Pretreating for chinese whispers:" + edgeDir + "/" + filename);
                 String line = null;
                 while ((line = br.readLine()) != null) {
                     line = line.trim();

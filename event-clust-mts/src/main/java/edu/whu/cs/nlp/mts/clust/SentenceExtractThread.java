@@ -202,18 +202,18 @@ public class SentenceExtractThread implements Callable<Boolean>, SystemConstant{
                     //加载正文
                     try {
                         textList = CommonUtil.str2List(
-                                FileUtil.read(this.textDir + "/" + topicName + "/" + DIR_TEXT + "/" + filename, DEFAULT_CHARSET));
+                                FileUtil.read(this.textDir + "/" + topicName + "/" + DIR_CR_TEXT + "/" + filename, DEFAULT_CHARSET));
                     } catch (final IOException e) {
-                        this.log.error("加载文件失败：" + this.textDir + "/" + topicName + "/" + DIR_TEXT + "/" + filename, e);
+                        this.log.error("加载文件失败：" + this.textDir + "/" + topicName + "/" + DIR_CR_TEXT + "/" + filename, e);
                         //e.printStackTrace();
                     }
                 }
                 if(detailTextList == null){
                     try {
                         detailTextList =
-                                FileUtil.loadText(this.textDir + "/" + topicName + "/" + DIR_TEXT_DETAIL + "/" + filename, DEFAULT_CHARSET);
+                                FileUtil.loadText(this.textDir + "/" + topicName + "/" + DIR_CR_TEXT_DETAIL + "/" + filename, DEFAULT_CHARSET);
                     } catch (final IOException e) {
-                        this.log.error("加载文件失败：" + this.textDir + "/" + topicName + "/" + DIR_TEXT_DETAIL + "/" + filename, e);
+                        this.log.error("加载文件失败：" + this.textDir + "/" + topicName + "/" + DIR_CR_TEXT_DETAIL + "/" + filename, e);
                         //e.printStackTrace();
                     }
                 }
@@ -259,7 +259,7 @@ public class SentenceExtractThread implements Callable<Boolean>, SystemConstant{
                             this.log.error("无法映射事件对应的子句:\n左词：" + (leftWord == null ? "" : leftWord.getName()) +
                                     "\n中词：" + (middleWord == null ? "" : middleWord.getName()) +
                                     "\n右词：" + (rightWord == null ? "" : rightWord.getName()) +
-                                    "\n文件路径：" + this.textDir + "/" + topicName + "/" + DIR_TEXT + "/" + filename);
+                                    "\n文件路径：" + this.textDir + "/" + topicName + "/" + DIR_CR_TEXT + "/" + filename);
                             final StringBuilder tmp = new StringBuilder();
                             for (final String subSent : subSentList) {
                                 tmp.append(subSent + LINE_SPLITER);

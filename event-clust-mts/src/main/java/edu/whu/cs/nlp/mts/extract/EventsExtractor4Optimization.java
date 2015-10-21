@@ -443,20 +443,21 @@ public class EventsExtractor4Optimization implements SystemConstant, Callable<Bo
             try {
                 String text = FileUtil.read(this.textDir + "/" + filename, DEFAULT_CHARSET);
                 //对文本进行指代消解
-                text = pretreatment.coreferenceResolution(text);
+                final Map<String, String> preTreatResult = pretreatment.coreferenceResolution(text);
+                text = preTreatResult.get(Pretreatment.KEY_CR_TEXT);
                 //利用stanford的nlp核心工具进行处理
                 final Map<String, Object> coreNlpResults =  coreNlpOperate(text);
                 //获取句子切分后的文本
                 final String segedtext = (String) coreNlpResults.get("segedText");
-                FileUtil.write(this.textDir + "/" + DIR_TEXT + "/" + filename, segedtext, DEFAULT_CHARSET);
+                FileUtil.write(this.textDir + "/" + DIR_CR_TEXT + "/" + filename, segedtext, DEFAULT_CHARSET);
 
                 //获取句子切分后的文本详细信息
                 final String segedTextDetail = (String) coreNlpResults.get("segedTextDetail");
-                FileUtil.write(this.textDir + "/" + DIR_TEXT_DETAIL + "/" + filename, segedTextDetail, DEFAULT_CHARSET);
+                FileUtil.write(this.textDir + "/" + DIR_CR_TEXT_DETAIL + "/" + filename, segedTextDetail, DEFAULT_CHARSET);
 
                 //获取句子切分后的带有词性的文本信息
                 final String segedTextPOS = (String) coreNlpResults.get("segedTextPOS");
-                FileUtil.write(this.textDir + "/" + DIR_TEXT_DETAIL + "/pos/" + filename, segedTextPOS, DEFAULT_CHARSET);
+                FileUtil.write(this.textDir + "/" + DIR_CR_TEXT_DETAIL + "/pos/" + filename, segedTextPOS, DEFAULT_CHARSET);
 
                 //获取对句子中单词进行对象化后的文本
                 @SuppressWarnings("unchecked")
