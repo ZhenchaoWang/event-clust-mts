@@ -13,8 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
@@ -46,7 +45,7 @@ import edu.whu.cs.nlp.mts.utils.FileUtil;
  */
 public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boolean>{
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     private final StanfordCoreNLP pipeline;
     private final String textDir;  //输入文件所在目录

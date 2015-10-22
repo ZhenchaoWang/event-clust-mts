@@ -12,8 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.clust.CalculateSimilarityThread;
 import edu.whu.cs.nlp.mts.clust.ClusterByChineseWhispers;
@@ -28,8 +27,7 @@ import edu.whu.cs.nlp.mts.sys.SystemConstant;
  */
 public class MTSBOEC implements SystemConstant{
 
-    private static Logger log = LoggerFactory.getLogger(MTSBOEC.class);
-
+    private static final Logger log = Logger.getLogger(MTSBOEC.class);
     public static void main(String[] args) {
 
         if(args.length == 0){

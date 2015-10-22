@@ -14,8 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.whu.cs.nlp.mts.domain.CWRunParam;
@@ -30,7 +29,7 @@ import edu.whu.cs.nlp.mts.sys.SystemConstant;
  */
 public class ClusterByChineseWhispers implements SystemConstant{
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     private final String nodesDir; // 存放node文件的目录
     private final String edgeDir; // 存放edge文件的目录
@@ -164,7 +163,6 @@ public class ClusterByChineseWhispers implements SystemConstant{
 
             @Override
             public boolean accept(File file, String name) {
-                // TODO Auto-generated method stub
                 if (name.endsWith(".read")) {
                     return true;
                 }

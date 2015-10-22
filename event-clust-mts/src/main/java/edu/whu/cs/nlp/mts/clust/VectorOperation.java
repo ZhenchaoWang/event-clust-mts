@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.domain.Event;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
@@ -21,7 +20,7 @@ import edu.whu.cs.nlp.mts.utils.EhCacheUtil;
  */
 public class VectorOperation implements SystemConstant{
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     private final EhCacheUtil ehCacheUtil;
     private final int dimension;  //向量维度

@@ -16,8 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.stanford.nlp.dcoref.CorefChain;
 import edu.stanford.nlp.dcoref.CorefChain.CorefMention;
@@ -48,7 +47,7 @@ public class Pretreatment implements SystemConstant {
      */
     public static final String KEY_CR_TEXT = "key_cr_text";
 
-    private final Logger   log = LoggerFactory.getLogger(this.getClass());
+    private final Logger   log = Logger.getLogger(this.getClass());
 
     /**
      * 测试驱动类

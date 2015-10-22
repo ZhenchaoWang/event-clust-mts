@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.domain.Event;
 import edu.whu.cs.nlp.mts.domain.Event2Id;
@@ -25,7 +24,7 @@ import edu.whu.cs.nlp.mts.utils.FileUtil;
  */
 public class EventVectorBuilderThread implements Runnable, SystemConstant{
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     private final String topicDir;
     private final String saveBaseDir;

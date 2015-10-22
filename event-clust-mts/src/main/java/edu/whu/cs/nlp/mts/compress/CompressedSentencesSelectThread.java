@@ -14,8 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.domain.AttributeInClassForSentenceSilimarity;
 import edu.whu.cs.nlp.mts.domain.SentNumSimiPair;
@@ -32,7 +31,7 @@ import edu.whu.cs.nlp.mts.utils.FileUtil;
 public class CompressedSentencesSelectThread implements Runnable, SystemConstant {
 
     public final static int MAX_SENTENCE_COUNT = 51;  //每个类别的最大句子数
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
     private final String compressedFilePath; // 压缩语句文件名
     private final String summaryFilePath; // 摘要文件名
     private final String question;   //问题

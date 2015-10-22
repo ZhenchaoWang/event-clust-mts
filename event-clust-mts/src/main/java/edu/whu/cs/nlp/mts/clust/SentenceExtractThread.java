@@ -21,8 +21,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.mit.jwi.IDictionary;
 import edu.stanford.nlp.ling.HasWord;
@@ -44,7 +43,7 @@ import edu.whu.cs.nlp.mts.utils.WordNetUtil;
  */
 public class SentenceExtractThread implements Callable<Boolean>, SystemConstant{
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = Logger.getLogger(this.getClass());
 
     private final String clusterResultDir;  //聚类结果所在路径
     private final String filename_cluster_read;  //主题聚类之后的结果文件名

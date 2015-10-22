@@ -7,8 +7,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.compress.CompressedSentencesSelectThread;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
@@ -20,7 +19,7 @@ import edu.whu.cs.nlp.mts.sys.SystemConstant;
  */
 public class SummaryBuilder implements SystemConstant{
 
-    private static Logger log = LoggerFactory.getLogger(SummaryBuilder.class);
+    private static Logger log = Logger.getLogger(SummaryBuilder.class);
 
     public static void main(String[] args) {
         if(args.length == 0){

@@ -17,8 +17,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.clust.ClusterByChineseWhispers;
 import edu.whu.cs.nlp.mts.domain.CWRunParam;
@@ -33,7 +32,7 @@ import wzc.util.c3p0.C3P0Util;
  */
 public class ParameterOptimization implements SystemConstant{
 
-    private static Logger log = LoggerFactory.getLogger(ParameterOptimization.class);
+    private static Logger log = Logger.getLogger(ParameterOptimization.class);
 
     /**
      * 执行命令过程中的输出处理
