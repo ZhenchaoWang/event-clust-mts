@@ -67,6 +67,17 @@
             <artifactId>jwi</artifactId>
             <version>2.2.3</version>
         </dependency>
+        <!-- apache commons -->
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
         <!-- junit -->
         <dependency>
             <groupId>junit</groupId>
@@ -118,7 +129,8 @@
                 <version>2.4</version>
                 <!-- The configuration of the plugin -->
                 <configuration>
-                    <!-- Specifies the configuration file of the assembly plugin -->
+                    <!-- Specifies the configuration file of the assembly 
+                        plugin -->
                     <descriptors>
                         <descriptor>src/main/resources/package.xml</descriptor>
                     </descriptors>

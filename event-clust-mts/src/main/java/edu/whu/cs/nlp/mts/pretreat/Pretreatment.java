@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import edu.stanford.nlp.dcoref.CorefChain;
@@ -38,33 +39,19 @@ import edu.whu.cs.nlp.mts.utils.FileUtil;
  */
 public class Pretreatment implements SystemConstant {
 
-    /**
-     * 获取句子切分文本的key
-     */
+    /**获取句子切分文本的key*/
     public static final String KEY_SEG_TEXT = "key_seg_text";
-    /**
-     * 获取指代消解文本的key
-     */
+    /**获取指代消解文本的key*/
     public static final String KEY_CR_TEXT = "key_cr_text";
 
     private final Logger   log = Logger.getLogger(this.getClass());
 
-    /**
-     * 测试驱动类
-     * @param args
-     * @throws IOException
-     */
-    public static void main(String[] args) throws IOException {
-        final Pretreatment pret = new Pretreatment();
-        final String text = FileUtil.read("F:/test/text/D0745J/APW19981217.0770", Charset.forName("UTF-8"));
-        System.out.println(pret.coreferenceResolution(text));
-    }
-
     private final StanfordCoreNLP pipeline;
 
     public Pretreatment() {
-        super();
+
         this.pipeline = CoreNlpObject.getPipeLine();
+
     }
 
     /**
@@ -74,9 +61,11 @@ public class Pretreatment implements SystemConstant {
      * @return
      */
     public Map<String, String> coreferenceResolution(String input) {
+
         final Map<String, String> result = new HashMap<String, String>();
-        //String afterCoref = input;
-        if (input != null && !"".equals(input.trim())) {
+
+        if (StringUtils.isNotBlank(input)) {
+
             final Annotation document = new Annotation(input);
             this.pipeline.annotate(document);
 
@@ -97,27 +86,41 @@ public class Pretreatment implements SystemConstant {
              * 获取输入文本中的指代链，并执行指代消解
              */
             final Map<Integer, CorefChain> graph = document.get(CorefChainAnnotation.class);
+
             final Set<Map.Entry<Integer, CorefChain>> set = graph.entrySet();
+
             for (final Iterator<Map.Entry<Integer, CorefChain>> it = set.iterator(); it.hasNext();) {
+
                 final Map.Entry<Integer, CorefChain> entry = it.next();
 
                 if (entry.getValue().getMentionsInTextualOrder().size() > 1) {
-                    String sortestPhrase = null; // 记录一个指代链中最短的飞指示代词短语
+
+                    String sortestPhrase = null; // 记录一个指代链中最短的非指示代词短语
+
                     final List<CorefMention> pronounWords = new ArrayList<CorefMention>(); // 存放当前指代链中所有的指示代词
+
                     for (int k = 0; k < entry.getValue().getMentionsInTextualOrder().size(); k++) {
+
                         final CorefMention mention = entry.getValue().getMentionsInTextualOrder().get(k);
+
                         if (mention != null) {
+
                             final String currentWord = mention.mentionSpan;
+
                             if (!EXCEPTED_DEMONSTRACTIVE_PRONOUN.contains(currentWord.toLowerCase())) {
                                 if (sortestPhrase == null || currentWord.length() < sortestPhrase.length()) {
                                     sortestPhrase = currentWord;
                                 }
                             }
+
                             if (DEMONSTRACTIVE_PRONOUN.contains(currentWord.toLowerCase())) {
                                 pronounWords.add(mention);
                             }
+
                         }
+
                     }
+
                     if (pronounWords.size() > 0 && sortestPhrase != null) {
 
                         // 利用指示代词所指短语对原句中的指示代词进行替换
@@ -199,6 +202,17 @@ public class Pretreatment implements SystemConstant {
                 }
             }
         }
+    }
+
+    /**
+     * 测试驱动类
+     * @param args
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        final Pretreatment pret = new Pretreatment();
+        final String text = FileUtil.read("F:/test/text/D0745J/APW19981217.0770", Charset.forName("UTF-8"));
+        System.out.println(pret.coreferenceResolution(text));
     }
 
 }

@@ -47,6 +47,9 @@ public interface SystemConstant {
      */
     public final static String      DIR_PARSE                       = "parsed";
 
+    /**依存分析结果简版存放目录*/
+    public static final String      DIR_PARSE_SIMPLE                = "parsed_simplify";
+
     /**
      * 存放事件抽取结果的目录名
      */
@@ -55,7 +58,7 @@ public interface SystemConstant {
     /**
      * 采用精简表示形式的事件所存放的目录
      */
-    public final static String      DIR_SIMPLIFY_EVENT              = "simplify_events";
+    public final static String      DIR_SIMPLIFY_EVENT              = "events_simplify";
 
     /**
      * node文件存放目录名称

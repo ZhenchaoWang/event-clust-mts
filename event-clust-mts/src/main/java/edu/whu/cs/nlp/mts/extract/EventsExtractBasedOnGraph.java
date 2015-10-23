@@ -534,10 +534,11 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                 //对文本进行句子切分和指代消解
                 final Map<String, String> preTreatResult = pretreatment.coreferenceResolution(text);
                 FileUtil.write(this.textDir + "/" + DIR_TEXT + "/" + filename, preTreatResult.get(Pretreatment.KEY_SEG_TEXT), DEFAULT_CHARSET);
-
                 text = preTreatResult.get(Pretreatment.KEY_CR_TEXT);
+
                 //利用stanford的nlp核心工具进行处理
                 final Map<String, Object> coreNlpResults =  coreNlpOperate(text);
+
                 //获取句子切分后的文本
                 final String segedtext = (String) coreNlpResults.get("segedText");
                 FileUtil.write(this.textDir + "/" + DIR_CR_TEXT + "/" + filename, segedtext, DEFAULT_CHARSET);
@@ -550,21 +551,44 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                 final String segedTextPOS = (String) coreNlpResults.get("segedTextPOS");
                 FileUtil.write(this.textDir + "/" + DIR_CR_TEXT_DETAIL + "/pos/" + filename, segedTextPOS, DEFAULT_CHARSET);
 
-                //获取对句子中单词进行对象化后的文本
+                //获取对句子中单词进行对象化后的文本，将字符串表示成Word对象
                 @SuppressWarnings("unchecked")
-                final
-                List<List<Word>> words = (List<List<Word>>) coreNlpResults.get("words");
+                final List<List<Word>> words = (List<List<Word>>) coreNlpResults.get("words");
+
+                StringBuilder sb_words_pos = new StringBuilder();
+                for (List<Word> list : words) {
+                    StringBuilder sb_words = new StringBuilder();
+                    StringBuilder sb_pos = new StringBuilder();
+                    for (Word word : list) {
+                        sb_words.append(word.getName() + " ");
+                        sb_pos.append(word.getPos() + " ");
+                    }
+                    sb_words_pos.append(sb_words.toString().trim() + LINE_SPLITER);
+                    sb_words_pos.append(sb_pos.toString().trim() + LINE_SPLITER);
+                }
+                // 词和词性分开按行存储
+                FileUtil.write(this.textDir + "/" + DIR_CR_TEXT_DETAIL + "/pos2/" + filename,
+                        CommonUtil.cutLastLineSpliter(sb_words_pos.toString()), DEFAULT_CHARSET);
 
                 //获取依存分析结果
                 @SuppressWarnings("unchecked")
-                final
-                List<List<ParseItem>> parseItemList = (List<List<ParseItem>>) coreNlpResults.get("parseItems");
+                final List<List<ParseItem>> parseItemList = (List<List<ParseItem>>) coreNlpResults.get("parseItems");
                 FileUtil.write(this.textDir + "/" + DIR_PARSE + "/" + filename,
                         CommonUtil.lists2String(parseItemList), DEFAULT_CHARSET);
 
+                //记录简版的依存分析结果
+                final StringBuilder simplifyParsedResult = new StringBuilder();
+                for (final List<ParseItem> parseItems : parseItemList) {
+                    for (final ParseItem parseItem : parseItems) {
+                        simplifyParsedResult.append(parseItem.toShortString() + "\t");
+                    }
+                    simplifyParsedResult.append(LINE_SPLITER);
+                }
+                FileUtil.write(this.textDir + "/" + DIR_PARSE_SIMPLE + "/" + filename,
+                        CommonUtil.cutLastLineSpliter(simplifyParsedResult.toString()), DEFAULT_CHARSET);
+
                 //对当前文本进行事件抽取
                 final Map<Integer, List<Event>> events = extract(parseItemList, words, filename);
-
 
                 final StringBuilder sb_events = new StringBuilder();
                 final StringBuilder sb_simplify_events = new StringBuilder();
@@ -606,8 +630,8 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
      * @param args
      */
     public static void main(String[] args) {
-        final ExecutorService es = Executors.newFixedThreadPool(1);
-        es.submit(new EventsExtractBasedOnGraph("E:/mts_dir_singleoptimization/test"));
+        final ExecutorService es = Executors.newFixedThreadPool(4);
+        es.submit(new EventsExtractBasedOnGraph("E:/workspace/optimization/singleText"));
         es.shutdown();
     }
 
