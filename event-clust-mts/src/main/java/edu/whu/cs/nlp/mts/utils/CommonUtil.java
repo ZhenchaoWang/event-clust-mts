@@ -3,6 +3,8 @@ package edu.whu.cs.nlp.mts.utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import edu.whu.cs.nlp.mts.domain.Word;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 
@@ -13,6 +15,8 @@ import edu.whu.cs.nlp.mts.sys.SystemConstant;
  */
 public class CommonUtil implements SystemConstant{
 
+    public static final Logger log = Logger.getLogger(CommonUtil.class);
+
     /**
      * 去除文本最后的面的换行符
      * @param text
@@ -21,7 +25,7 @@ public class CommonUtil implements SystemConstant{
     public static String cutLastLineSpliter(String text){
         String value = text;
         if(text != null){
-            final int index = text.lastIndexOf(LINE_SPLITER);
+            int index = text.lastIndexOf(LINE_SPLITER);
             if(index > 0){
                 value = text.substring(0, index);
             }
@@ -37,10 +41,10 @@ public class CommonUtil implements SystemConstant{
      */
     public static <T> String lists2String(List<List<T>> lists){
         String result = null;
-        final StringBuilder sb_out = new StringBuilder();
-        for (final List<T> list : lists) {
-            final StringBuilder sb_in = new StringBuilder();
-            for (final T t : list) {
+        StringBuilder sb_out = new StringBuilder();
+        for (List<T> list : lists) {
+            StringBuilder sb_in = new StringBuilder();
+            for (T t : list) {
                 sb_in.append(t.toString() + " ");
             }
             sb_out.append(sb_in.toString().trim() + LINE_SPLITER);
@@ -57,8 +61,8 @@ public class CommonUtil implements SystemConstant{
      */
     public static <T> String list2String(List<T> list){
         String result = null;
-        final StringBuilder sb = new StringBuilder();
-        for (final T t : list) {
+        StringBuilder sb = new StringBuilder();
+        for (T t : list) {
             sb.append(t.toString() + " ");
         }
         result = sb.toString().trim();
@@ -74,7 +78,7 @@ public class CommonUtil implements SystemConstant{
     public static Word str2Word(String str){
         Word word = null;
         if(str != null && !"".equals(str.trim())){
-            final String[] attrs = str.split(WORD_ATTRBUTE_CONNECTOR);
+            String[] attrs = str.split(WORD_ATTRBUTE_CONNECTOR);
             word = new Word();
             word.setName(attrs[0]);
             word.setLemma(attrs[1]);
@@ -95,12 +99,44 @@ public class CommonUtil implements SystemConstant{
         List<String> list = null;
         if(input != null){
             list = new ArrayList<String>();
-            final String[] lines = input.split(LINE_SPLITER);
-            for (final String line : lines) {
+            String[] lines = input.split(LINE_SPLITER);
+            for (String line : lines) {
                 list.add(line);
             }
         }
         return list;
+    }
+
+    /**
+     * 将字符串形式的详细词信息，转化成对象进行存储
+     * @param wordStr
+     * @return
+     */
+    public static Word string2Word(String wordStr){
+        Word word = null;
+        if(wordStr != null && !"".equals(wordStr.trim())){
+            try{
+                String[] attrs = wordStr.split(WORD_ATTRBUTE_CONNECTOR);
+                word = new Word();
+                word.setName(attrs[0]);
+                word.setLemma(attrs[1]);
+                word.setPos(attrs[2]);
+                word.setNer(attrs[3]);
+                word.setSentenceNum(Integer.parseInt(attrs[4]));
+                word.setNumInLine(Integer.parseInt(attrs[5]));
+            }catch(Exception e){
+                log.error("解析词失败：" + wordStr, e);
+                word = new Word();
+                word.setName("");
+                word.setLemma("");
+                word.setPos("");
+                word.setNer("O");
+                word.setSentenceNum(-1);
+                word.setNumInLine(-1);
+            }
+
+        }
+        return word;
     }
 
 }

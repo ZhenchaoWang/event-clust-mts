@@ -300,7 +300,7 @@ public interface SystemConstant {
             add("dobj");
             add("nsubjpass");
             add("acomp");
-            add("ccomp");
+            //add("ccomp");  // ccomp不靠谱
             add("xcomp");
         }
     };

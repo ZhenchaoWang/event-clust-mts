@@ -30,13 +30,15 @@ public class FileUtil implements SystemConstant{
     private static Logger log = Logger.getLogger(FileUtil.class);
 
     /**
-     * 写文件函数，自动创建写路径
+     * 写文件函数，自动创建写路径<br>
+     * 不推荐使用，建议使用apache commons工具包
      * @param filepath
      * @param content
      * @param charset
      * @return
      * @throws IOException
      */
+    @Deprecated
     public static void write(String filepath, String content, Charset charset) throws IOException {
         if (filepath != null && content != null) {
             //判断写路径是否存在，不存在则创建
@@ -60,12 +62,14 @@ public class FileUtil implements SystemConstant{
     }
 
     /**
-     * 加载指定文件中的内容，并返回一个完整的字符串
+     * 加载指定文件中的内容，并返回一个完整的字符串<br>
+     * 不推荐使用，建议使用apache commons工具包
      * @param filepath
      * @param charset
      * @return
      * @throws IOException
      */
+    @Deprecated
     public static String read(String filepath, Charset charset) throws IOException{
         String text = null;
         BufferedReader br = null;
@@ -156,38 +160,6 @@ public class FileUtil implements SystemConstant{
     }
 
     /**
-     * 将字符串形式的详细词信息，转化成对象进行存储
-     * @param wordStr
-     * @return
-     */
-    public static Word string2Word(String wordStr){
-        Word word = null;
-        if(wordStr != null && !"".equals(wordStr.trim())){
-            try{
-                final String[] attrs = wordStr.split(WORD_ATTRBUTE_CONNECTOR);
-                word = new Word();
-                word.setName(attrs[0]);
-                word.setLemma(attrs[1]);
-                word.setPos(attrs[2]);
-                word.setNer(attrs[3]);
-                word.setSentenceNum(Integer.parseInt(attrs[4]));
-                word.setNumInLine(Integer.parseInt(attrs[5]));
-            }catch(final Exception e){
-                log.error("解析词失败：" + wordStr, e);
-                word = new Word();
-                word.setName("");
-                word.setLemma("");
-                word.setPos("");
-                word.setNer("O");
-                word.setSentenceNum(-1);
-                word.setNumInLine(-1);
-            }
-
-        }
-        return word;
-    }
-
-    /**
      * 加载当前指定文本，并将其转化成词对象
      * @param filepath
      * @param charset
@@ -209,7 +181,7 @@ public class FileUtil implements SystemConstant{
                     final List<Word> words = new ArrayList<Word>();
                     final String[] wordsStr = lineStr.split("\\s+");
                     for (final String wordStr : wordsStr) {
-                        words.add(string2Word(wordStr));
+                        words.add(CommonUtil.string2Word(wordStr));
                     }
                     text.add(words);
                 }else{

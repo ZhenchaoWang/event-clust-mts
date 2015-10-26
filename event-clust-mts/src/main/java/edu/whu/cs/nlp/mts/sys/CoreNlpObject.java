@@ -5,7 +5,8 @@ import java.util.Properties;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 
 /**
- * stanford coreNlp对象初始化类
+ * stanford coreNlp对象初始化类<br>
+ * 单例模式，线程安全
  *
  * @author Apache_xiaochao
  *
