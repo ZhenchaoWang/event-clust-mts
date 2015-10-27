@@ -16,7 +16,7 @@ import java.util.concurrent.Callable;
 import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.domain.Event;
-import edu.whu.cs.nlp.mts.domain.Event2Id;
+import edu.whu.cs.nlp.mts.domain.EventToId;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 import edu.whu.cs.nlp.mts.utils.CommonUtil;
 import edu.whu.cs.nlp.mts.utils.FileUtil;
@@ -49,7 +49,7 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
         final String topicName = this.topicDir.substring(this.topicDir.lastIndexOf("/"));
         log.info(Thread.currentThread().getId() +  " is running, dir:" + this.topicDir);
         int num = 0; // 事件编号
-        final List<Event2Id> event_id_list = new ArrayList<Event2Id>(); // 存放所有事件及其对应的序号
+        final List<EventToId> event_id_list = new ArrayList<EventToId>(); // 存放所有事件及其对应的序号
         final File f_event_files = new File(this.topicDir + "/" + DIR_EVENTS);
         final String[] filenames = f_event_files.list();
         final Map<Integer, List<Double[]>> eventVecsMap = new TreeMap<Integer, List<Double[]>>();  //记录每一个事件对应的向量集合，一个事件可能有多个向量
@@ -62,7 +62,7 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
                     //对事件进行编号
                     for (final Event event : eventsInFile) {
                         //对事件进行编号，然后封装成对象存储
-                        final Event2Id event2Id = new Event2Id();
+                        final EventToId event2Id = new EventToId();
                         event2Id.setEvent(event);
                         event2Id.setNum(num);
                         event_id_list.add(event2Id);
@@ -89,7 +89,7 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
         if (event_id_list.size() > 0) {
             // 将事件及其序号信息，写入文件
             final StringBuilder sb_nodes = new StringBuilder();
-            for (final Event2Id event2Id : event_id_list) {
+            for (final EventToId event2Id : event_id_list) {
                 sb_nodes.append(event2Id.getNum() + "\t" + event2Id.getEvent().toString() + LINE_SPLITER);
             }
             final String str_nodes = CommonUtil.cutLastLineSpliter(sb_nodes.toString());
@@ -103,7 +103,7 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
 
         // 将上面的事件集合转化成用map进行存储
         final Map<Integer, Event> eventMap = new TreeMap<Integer, Event>();
-        for (final Event2Id event2Id : event_id_list) {
+        for (final EventToId event2Id : event_id_list) {
             eventMap.put(event2Id.getNum(), event2Id.getEvent());
         }
 

@@ -32,7 +32,7 @@ import edu.whu.cs.nlp.mts.domain.Event;
 import edu.whu.cs.nlp.mts.domain.ParseItem;
 import edu.whu.cs.nlp.mts.domain.Word;
 import edu.whu.cs.nlp.mts.pretreat.Pretreatment;
-import edu.whu.cs.nlp.mts.sys.CoreNlpObject;
+import edu.whu.cs.nlp.mts.sys.ModelLoader;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 import edu.whu.cs.nlp.mts.utils.CommonUtil;
 import edu.whu.cs.nlp.mts.utils.FileUtil;
@@ -53,7 +53,7 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
     public EventsExtractBasedOnGraph(String textDir) {
         super();
         this.textDir = textDir;
-        this.pipeline = CoreNlpObject.getPipeLine();
+        this.pipeline = ModelLoader.getPipeLine();
     }
 
     /**
@@ -137,8 +137,8 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
             }
             wordsList.add(words);
             textAfterSSeg.append(sentence.toString() + LINE_SPLITER);
-            textAfterSsegDetail.append(words2Sentence(words) + LINE_SPLITER);
-            textWithPOS.append(words2SentenceSimply(words) + LINE_SPLITER);
+            textAfterSsegDetail.append(this.words2Sentence(words) + LINE_SPLITER);
+            textWithPOS.append(this.words2SentenceSimply(words) + LINE_SPLITER);
 
             //获取依存依存分析结果
             //Tree tree = sentence.get(TreeAnnotation.class);
@@ -213,10 +213,10 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                         if(pattern_include.matcher(event_in.getLeftWord().getLemma()).find()
                                 && !pattern_exclude.matcher(event_in.getLeftWord().getLemma()).find()){
                             //将当前三元事件降级为二元事件
-                            event = new Event(event_in.getLeftWord(), event_in.getMiddleWord(), null, event_in.getFilename());
+                            event = new Event(event_in.getLeftWord(), null, event_in.getMiddleWord(), null, event_in.getFilename());
                         } else if(pattern_include.matcher(event_in.getRightWord().getLemma()).find()
                                 && !pattern_exclude.matcher(event_in.getRightWord().getLemma()).find()){
-                            event = new Event(null, event_in.getMiddleWord(), event_in.getRightWord(), event_in.getFilename());
+                            event = new Event(null, null, event_in.getMiddleWord(), event_in.getRightWord(), event_in.getFilename());
                         } else {
                             event = null;
                         }
@@ -396,7 +396,7 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                 final List<ParseItem> parseItems = parsedList.get(k);
                 final List<Word> wordsInSentence = words.get(k);
                 final int wordsCount = wordsInSentence.size();
-                final String[][] edges = wordGraphBuilder(parseItems, wordsCount);
+                final String[][] edges = this.wordGraphBuilder(parseItems, wordsCount);
                 final List<Event> eventsInSentence = new ArrayList<Event>();
                 //构建事件
                 for(int i = 0; i < wordsCount; ++i){
@@ -426,10 +426,10 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                     Word middleWord = wordsInSentence.get(i);
                     if(agents.size() != 0 && objects.size() != 0){
                         for (final Integer agent : agents) {
-                            final Word leftWord = personPronoun2Name(wordsInSentence, wordsInSentence.get(agent));
+                            final Word leftWord = this.personPronoun2Name(wordsInSentence, wordsInSentence.get(agent));
                             for (final Integer object : objects) {
-                                final Word rightWord = personPronoun2Name(wordsInSentence, wordsInSentence.get(object));
-                                final Event event = eventFilter(new Event(leftWord, middleWord, rightWord, filename));
+                                final Word rightWord = this.personPronoun2Name(wordsInSentence, wordsInSentence.get(object));
+                                final Event event = this.eventFilter(new Event(leftWord, null, middleWord, rightWord, filename));
                                 if(event != null){
                                     eventsInSentence.add(event);
                                 }
@@ -455,18 +455,18 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
 							}*/
                             //缺失宾语的事件
                             for (final Integer agent : agents) {
-                                final Word leftWord = personPronoun2Name(wordsInSentence, wordsInSentence.get(agent));
+                                final Word leftWord = this.personPronoun2Name(wordsInSentence, wordsInSentence.get(agent));
                                 if(middleWords.size() > 0){
                                     //如果存在依存关系cop，则用cop关系将二元事件补全为三元事件
-                                    middleWord = personPronoun2Name(wordsInSentence, middleWord);
+                                    middleWord = this.personPronoun2Name(wordsInSentence, middleWord);
                                     for (final Word mw : middleWords) {
-                                        final Event event = eventFilter(new Event(leftWord, mw, middleWord, filename));
+                                        final Event event = this.eventFilter(new Event(leftWord, null, mw, middleWord, filename));
                                         if(event != null){
                                             eventsInSentence.add(event);
                                         }
                                     }
                                 }else{
-                                    final Event event = eventFilter(new Event(leftWord, middleWord, subjWord == null ? null : subjWord, filename));
+                                    final Event event = this.eventFilter(new Event(leftWord, null, middleWord, subjWord == null ? null : subjWord, filename));
                                     if(event != null){
                                         eventsInSentence.add(event);
                                     }
@@ -494,16 +494,16 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
 
 							}*/
                             for (final Integer object : objects) {
-                                final Word rightWord = personPronoun2Name(wordsInSentence, wordsInSentence.get(object));
+                                final Word rightWord = this.personPronoun2Name(wordsInSentence, wordsInSentence.get(object));
                                 if(leftWords.size() > 0){
                                     for (final Word leftWord : leftWords) {
-                                        final Event event = eventFilter(new Event(personPronoun2Name(wordsInSentence, leftWord), middleWord, rightWord, filename));
+                                        final Event event = this.eventFilter(new Event(this.personPronoun2Name(wordsInSentence, leftWord), null, middleWord, rightWord, filename));
                                         if(event != null){
                                             eventsInSentence.add(event);
                                         }
                                     }
                                 }else{
-                                    final Event event = eventFilter(new Event(objWord == null ? null : objWord, middleWord, rightWord, filename));
+                                    final Event event = this.eventFilter(new Event(objWord == null ? null : objWord, null, middleWord, rightWord, filename));
                                     if(event != null){
                                         eventsInSentence.add(event);
                                     }
@@ -537,7 +537,7 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                 text = preTreatResult.get(Pretreatment.KEY_CR_TEXT);
 
                 //利用stanford的nlp核心工具进行处理
-                final Map<String, Object> coreNlpResults =  coreNlpOperate(text);
+                final Map<String, Object> coreNlpResults =  this.coreNlpOperate(text);
 
                 //获取句子切分后的文本
                 final String segedtext = (String) coreNlpResults.get("segedText");
@@ -588,14 +588,14 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                         CommonUtil.cutLastLineSpliter(simplifyParsedResult.toString()), DEFAULT_CHARSET);
 
                 //对当前文本进行事件抽取
-                final Map<Integer, List<Event>> events = extract(parseItemList, words, filename);
+                final Map<Integer, List<Event>> events = this.extract(parseItemList, words, filename);
 
                 final StringBuilder sb_events = new StringBuilder();
                 final StringBuilder sb_simplify_events = new StringBuilder();
                 for (final Entry<Integer, List<Event>> entry : events.entrySet()) {
                     final String eventsInSentence = CommonUtil.list2String(entry.getValue());
                     sb_events.append(entry.getKey() + "\t" + eventsInSentence + LINE_SPLITER);
-                    sb_simplify_events.append(entry.getKey() + "\t" + getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
+                    sb_simplify_events.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
                 }
                 FileUtil.write(
                         this.textDir + "/" + DIR_EVENTS + "/" + filename,

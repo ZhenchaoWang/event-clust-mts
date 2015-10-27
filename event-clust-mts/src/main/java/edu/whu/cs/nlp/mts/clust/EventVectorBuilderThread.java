@@ -12,7 +12,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.domain.Event;
-import edu.whu.cs.nlp.mts.domain.Event2Id;
+import edu.whu.cs.nlp.mts.domain.EventToId;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 import edu.whu.cs.nlp.mts.utils.CommonUtil;
 import edu.whu.cs.nlp.mts.utils.FileUtil;
@@ -45,7 +45,7 @@ public class EventVectorBuilderThread implements Runnable, SystemConstant{
         final String topicName = this.topicDir.substring(this.topicDir.lastIndexOf("/"));
         this.log.info(Thread.currentThread().getId() +  " is calculating event vectors, dir:" + this.topicDir);
         int num = 0; // 事件编号
-        final List<Event2Id> event_id_list = new ArrayList<Event2Id>(); // 存放所有事件及其对应的序号
+        final List<EventToId> event_id_list = new ArrayList<EventToId>(); // 存放所有事件及其对应的序号
         final File f_event_files = new File(this.topicDir + "/" + DIR_EVENTS);
         final String[] filenames = f_event_files.list();
         final Map<Integer, List<Double[]>> eventVecsMap = new TreeMap<Integer, List<Double[]>>();  //记录每一个事件对应的向量集合，一个事件可能有多个向量
@@ -59,7 +59,7 @@ public class EventVectorBuilderThread implements Runnable, SystemConstant{
                     //对事件进行编号
                     for (final Event event : eventsInFile) {
                         //对事件进行编号，然后封装成对象存储
-                        final Event2Id event2Id = new Event2Id();
+                        final EventToId event2Id = new EventToId();
                         event2Id.setEvent(event);
                         event2Id.setNum(num);
                         event_id_list.add(event2Id);

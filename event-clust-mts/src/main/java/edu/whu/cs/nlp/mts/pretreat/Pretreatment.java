@@ -26,7 +26,7 @@ import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
-import edu.whu.cs.nlp.mts.sys.CoreNlpObject;
+import edu.whu.cs.nlp.mts.sys.ModelLoader;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 import edu.whu.cs.nlp.mts.utils.CommonUtil;
 import edu.whu.cs.nlp.mts.utils.FileUtil;
@@ -50,7 +50,7 @@ public class Pretreatment implements SystemConstant {
 
     public Pretreatment() {
 
-        this.pipeline = CoreNlpObject.getPipeLine();
+        this.pipeline = ModelLoader.getPipeLine();
 
     }
 
@@ -62,19 +62,19 @@ public class Pretreatment implements SystemConstant {
      */
     public Map<String, String> coreferenceResolution(String input) {
 
-        final Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new HashMap<String, String>();
 
         if (StringUtils.isNotBlank(input)) {
 
-            final Annotation document = new Annotation(input);
+            Annotation document = new Annotation(input);
             this.pipeline.annotate(document);
 
             // 获取按行切分后的句子
-            final StringBuilder sb = new StringBuilder();  // 存放分割但未指代消解的句子
-            final List<CoreMap> sentences = document.get(SentencesAnnotation.class);
-            final List<String> strSentences = new ArrayList<String>();
-            for (final CoreMap sentence : sentences) {
-                final String sent = sentence.toString().replaceAll("\n", " ").replaceAll("\r\n", " ").replaceAll("\\s+", " ");
+            StringBuilder sb = new StringBuilder();  // 存放分割但未指代消解的句子
+            List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+            List<String> strSentences = new ArrayList<String>();
+            for (CoreMap sentence : sentences) {
+                String sent = sentence.toString().replaceAll("\n", " ").replaceAll("\r\n", " ").replaceAll("\\s+", " ");
                 sb.append(sent + LINE_SPLITER);
                 strSentences.add(sent);
             }

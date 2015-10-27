@@ -6,12 +6,12 @@ package edu.whu.cs.nlp.mts.domain;
  * @author Apache_xiaochao
  *
  */
-public class Event2Id {
+public class EventToId {
 
     private Event   event;
     private Integer num;
 
-    public Event2Id() {
+    public EventToId() {
         super();
     }
 
