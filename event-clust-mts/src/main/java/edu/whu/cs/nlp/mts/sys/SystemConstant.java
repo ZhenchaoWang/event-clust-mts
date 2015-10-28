@@ -66,11 +66,17 @@ public interface SystemConstant {
     /** 存放依存分析处理后事件的精简形式 */
     public static final String      DIR_CR_SIMPLIFY_EVENT           = "cr_events_simplify";
 
-    /** 存放依存分析和短语扩充处理后的事件 */
-    public static final String      DIR_CR_PE_EVENTS                   = "cr_pe_events";
+    /** 存放事件修复处理后的事件 */
+    public static final String      DIR_CR_RP_EVENTS                   = "cr_rp_events";
 
-    /** 存放依存分析和短语扩充处理后事件的精简形式 */
-    public static final String      DIR_CR_PE_SIMPLIFY_EVENT           = "cr_pe_events_simplify";
+    /** 存放事件修复处理后事件的精简形式 */
+    public static final String      DIR_CR_RP_SIMPLIFY_EVENT           = "cr_rp_events_simplify";
+
+    /** 存放短语扩充处理后的事件 */
+    public static final String      DIR_CR_RP_PE_EVENTS                   = "cr_rp_pe_events";
+
+    /** 存放短语扩充处理后事件的精简形式 */
+    public static final String      DIR_CR_RP_PE_SIMPLIFY_EVENT           = "cr_rp_pe_events_simplify";
 
     /**
      * node文件存放目录名称

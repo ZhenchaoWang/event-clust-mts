@@ -38,6 +38,7 @@ import edu.stanford.nlp.trees.TypedDependency;
 import edu.stanford.nlp.util.CoreMap;
 import edu.whu.cs.nlp.mts.domain.CoreferenceElement;
 import edu.whu.cs.nlp.mts.domain.Event;
+import edu.whu.cs.nlp.mts.domain.EventType;
 import edu.whu.cs.nlp.mts.domain.EventWithPhrase;
 import edu.whu.cs.nlp.mts.domain.EventWithWord;
 import edu.whu.cs.nlp.mts.domain.ParseItem;
@@ -239,30 +240,52 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 /**
                  * 事件修复
                  */
-                // TODO 事件修复 2015-10-28 16:58:46
+                /*经过指代消解和事件修复之后的事件*/
+                Map<Integer, List<EventWithPhrase>> eventsAfterCRAndRP = new TreeMap<Integer, List<EventWithPhrase>>();
+                try {
+
+                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCR.entrySet()) {
+                        eventsAfterCRAndRP.put(entry.getKey(), this.eventRepair(entry.getValue(), words.get(entry.getKey() - 1)));
+                    }
+
+                    /*中间结果记录：保存经过短语扩充之后的事件*/
+                    StringBuilder sb_events_phrase = new StringBuilder();
+                    StringBuilder sb_simplify_events_phrase = new StringBuilder();
+                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCRAndRP.entrySet()) {
+                        sb_events_phrase.append(entry.getKey() + "\t" + CommonUtil.list2String(entry.getValue()) + LINE_SPLITER);
+                        sb_simplify_events_phrase.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
+                    }
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_SIMPLIFY_EVENT, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
+
+                } catch (Throwable e) {
+
+                    this.log.error("repair event error!", e);
+
+                }
 
                 /**
                  * 短语扩充
                  */
-                /*经过指代消解和短语扩充之后的事件*/
-                Map<Integer, List<EventWithPhrase>> eventsAfterCRAndPE = new TreeMap<Integer, List<EventWithPhrase>>();
+                /*经过指代消解、事件修复、短语扩充之后的事件*/
+                Map<Integer, List<EventWithPhrase>> eventsAfterCRAndRPAndPE = new TreeMap<Integer, List<EventWithPhrase>>();
                 try {
 
-                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCR.entrySet()) {
+                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCRAndRP.entrySet()) {
                         Integer sentNum = entry.getKey();
                         List<EventWithPhrase> eventWithPhrases = this.phraseExpansion(entry.getValue(), words.get(sentNum - 1));
-                        eventsAfterCRAndPE.put(sentNum, eventWithPhrases);
+                        eventsAfterCRAndRPAndPE.put(sentNum, eventWithPhrases);
                     }
 
-                    /*中间结果记录：保存经过指代消解和短语扩充之后的事件*/
+                    /*中间结果记录：保存经过短语扩充之后的事件*/
                     StringBuilder sb_events_phrase = new StringBuilder();
                     StringBuilder sb_simplify_events_phrase = new StringBuilder();
-                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCR.entrySet()) {
+                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCRAndRPAndPE.entrySet()) {
                         sb_events_phrase.append(entry.getKey() + "\t" + CommonUtil.list2String(entry.getValue()) + LINE_SPLITER);
                         sb_simplify_events_phrase.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
                     }
-                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_PE_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
-                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_PE_SIMPLIFY_EVENT, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_SIMPLIFY_EVENT, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
 
                 } catch (Throwable e) {
 
@@ -677,7 +700,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
      */
     private List<EventWithPhrase> eventRepair(List<EventWithPhrase> eventWithPhrases, List<Word> words) {
 
-        List<EventWithPhrase> result = new ArrayList<EventWithPhrase>();
+        List<EventWithPhrase> result = eventWithPhrases;
 
         /**
          * 1.如果两个事件，一个是三元事件，一个是二元事件，<br>
@@ -685,21 +708,135 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
          *   则将这两个事件合为一个事件
          */
 
-        for(int i = 0; i < eventWithPhrases.size(); i++) {
-            for(int j = 0; j < eventWithPhrases.size(); j++) {
+        int i = 0, j = 0;
+        EventWithPhrase newEvent = null;
+        for(i = 0; i < eventWithPhrases.size(); i++) {
+            EventWithPhrase t_event = eventWithPhrases.get(i);
+            if(!EventType.TERNARY.equals(t_event.eventType())) {
+                continue;
+            }
+            if(t_event.getRightPhrases().size() > 1) {
+                // 过滤掉宾语为短语的事件
+                continue;
+            }
+            for(j = i + 1; j < eventWithPhrases.size(); j++) {
+                EventWithPhrase b_event = eventWithPhrases.get(j);
 
+                if(EventType.LEFT_MISSING.equals(b_event.eventType())) {
+                    continue;
+                }
+
+                if(t_event.getMiddlePhrases().size() > 1) {
+                    // 过滤掉谓语为短语的事件
+                    continue;
+                }
+
+                Word t_event_right_word = t_event.getRightPhrases().get(0);
+                Word b_event_left_word = b_event.getLeftPhrases().get(0);
+                if(t_event_right_word.equals(b_event_left_word)) {
+                    /**
+                     * 三元事件的宾语与二元事件的谓语相同，可以合并为一个事件
+                     * 合并规则：
+                     * 将三元事件的宾语与谓语合并为谓语，将二元事件的宾语作为新事件的宾语
+                     * 删除原先的二元事件
+                     */
+                    t_event.getMiddlePhrases().add(t_event_right_word);
+                    // 组合成新的事件
+                    newEvent = new EventWithPhrase(t_event.getLeftPhrases(), t_event.getMiddlePhrases(), b_event.getRightPhrases(), b_event.getFilename());
+                    break;
+                }
+            }
+            if(newEvent != null) {
+                break;
             }
         }
 
-        /**
-         * 2.如果一个事件的主语或者谓语是量词，<br>
-         *   则将该词替换成向前向后距离最近（不超过标点范围）的名词或命名实体
-         */
+        // 更新事件
+        if(newEvent != null) {
+            result.set(i, newEvent);
+            result.remove(j);
+        }
+
 
         /**
+         *
+         * 2.如果一个事件的主语或者谓语是限定词，<br>
+         *   则将该词替换成向后距离最近（不超过标点范围）的名词或命名实体
+         *
          * 3.如果一个事件缺失主语或者宾语，<br>
          *   则向前向后找最近（不超过标点范围）的名词或命名实体进行补全
+         *
          */
+        for(int k = 0; k < eventWithPhrases.size(); k++) {
+            EventWithPhrase eventWithPhrase = eventWithPhrases.get(k);
+
+            if(CollectionUtils.isNotEmpty(eventWithPhrase.getLeftPhrases())) {
+                if(eventWithPhrase.getLeftPhrases().size() == 1) {
+                    // 主语
+                    Word leftWord = eventWithPhrase.getLeftPhrases().get(0);
+                    if("DT".equals(leftWord.getPos())) {
+                        for(int n = leftWord.getNumInLine() + 1; n < words.size(); n++) {
+                            Word word = words.get(n);
+                            if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                leftWord = word;
+                            }
+                            if("PUNT".equals(word.getPos())) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                // 主语缺失，向前找标点范围内的最近的名词或命名实体
+                Word middleWord = eventWithPhrase.getMiddlePhrases().get(0);
+                for(int n = middleWord.getNumInLine() - 1; n > 0; n--) {
+                    Word word = words.get(n);
+                    if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                        eventWithPhrase.getLeftPhrases().add(word);
+                    }
+                    if("PUNT".equals(word.getPos())) {
+                        break;
+                    }
+                }
+            }
+
+            if(CollectionUtils.isNotEmpty(eventWithPhrase.getRightPhrases())) {
+                if(eventWithPhrase.getRightPhrases().size() == 1) {
+                    // 宾语
+                    Word rightWord = eventWithPhrase.getRightPhrases().get(0);
+                    if("DT".equals(rightWord.getPos())) {
+                        for(int n = rightWord.getNumInLine() + 1; n < words.size(); n++) {
+                            Word word = words.get(n);
+                            if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                rightWord = word;
+                            }
+                            if("PUNT".equals(word.getPos())) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                // 宾语缺失，向后找标点范围内最近的名词或命名实体
+                List<Word> middlePhrase = eventWithPhrase.getMiddlePhrases();
+                Word middleWord = null;
+                if(middlePhrase.size() == 2) {
+                    middleWord = middlePhrase.get(1);
+                } else {
+                    middleWord = middlePhrase.get(0);
+                }
+                for(int n = middleWord.getNumInLine() + 1; n < words.size(); n++) {
+                    Word word = words.get(n);
+                    if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                        eventWithPhrase.getRightPhrases().add(word);
+                    }
+                    if("PUNT".equals(word.getPos())) {
+                        break;
+                    }
+                }
+            }
+
+        }
 
         return result;
     }

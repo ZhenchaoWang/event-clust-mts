@@ -31,6 +31,55 @@ public class Word implements Serializable, SystemConstant, Cloneable {
         return super.clone();
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((this.lemma == null) ? 0 : this.lemma.hashCode());
+        result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
+        result = prime * result + ((this.ner == null) ? 0 : this.ner.hashCode());
+        result = prime * result + this.numInLine;
+        result = prime * result + ((this.pos == null) ? 0 : this.pos.hashCode());
+        result = prime * result + this.sentenceNum;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (this.getClass() != obj.getClass())
+            return false;
+        Word other = (Word) obj;
+        if (this.lemma == null) {
+            if (other.lemma != null)
+                return false;
+        } else if (!this.lemma.equals(other.lemma))
+            return false;
+        if (this.name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!this.name.equals(other.name))
+            return false;
+        if (this.ner == null) {
+            if (other.ner != null)
+                return false;
+        } else if (!this.ner.equals(other.ner))
+            return false;
+        if (this.numInLine != other.numInLine)
+            return false;
+        if (this.pos == null) {
+            if (other.pos != null)
+                return false;
+        } else if (!this.pos.equals(other.pos))
+            return false;
+        if (this.sentenceNum != other.sentenceNum)
+            return false;
+        return true;
+    }
+
     public String getLemma() {
         return this.lemma;
     }
