@@ -236,7 +236,39 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
 
                 }
 
-                // TODO 将事件中的词扩充成短语 2015-10-27 21:49:14
+                /**
+                 * 事件修复
+                 */
+                // TODO 事件修复 2015-10-28 16:58:46
+
+                /**
+                 * 短语扩充
+                 */
+                /*经过指代消解和短语扩充之后的事件*/
+                Map<Integer, List<EventWithPhrase>> eventsAfterCRAndPE = new TreeMap<Integer, List<EventWithPhrase>>();
+                try {
+
+                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCR.entrySet()) {
+                        Integer sentNum = entry.getKey();
+                        List<EventWithPhrase> eventWithPhrases = this.phraseExpansion(entry.getValue(), words.get(sentNum - 1));
+                        eventsAfterCRAndPE.put(sentNum, eventWithPhrases);
+                    }
+
+                    /*中间结果记录：保存经过指代消解和短语扩充之后的事件*/
+                    StringBuilder sb_events_phrase = new StringBuilder();
+                    StringBuilder sb_simplify_events_phrase = new StringBuilder();
+                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCR.entrySet()) {
+                        sb_events_phrase.append(entry.getKey() + "\t" + CommonUtil.list2String(entry.getValue()) + LINE_SPLITER);
+                        sb_simplify_events_phrase.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
+                    }
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_PE_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_PE_SIMPLIFY_EVENT, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
+
+                } catch (Throwable e) {
+
+                    this.log.error("exspand word to phrase error!", e);
+
+                }
 
                 // TODO 对事件进行过滤操作 2015-10-27 21:49:27
 
@@ -527,7 +559,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                          */
 
                         //从当前词语往前寻找最近的命名实体或名词来作为主语，效果下降，暂时屏蔽
-                        final Word objWord = null;
+                        Word objWord = null;
                         /*for(int n = middleWord.getNumInLine() - 1; n > 0; --n){
                             Word tmpWord = wordsInSentence.get(n);
                             if(POS_NOUN.contains(tmpWord.getPos()) || !"O".equals(tmpWord.getNer())){
@@ -567,7 +599,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
      * @return
      * @throws Exception
      */
-    public List<EventWithPhrase> phraseExpansion(List<EventWithWord> events, List<Word> words) throws Exception {
+    private List<EventWithPhrase> phraseExpansion(List<EventWithPhrase> events, List<Word> words) throws Exception {
         List<EventWithPhrase> eventsInSentence = new ArrayList<EventWithPhrase>();
         try {
             int wordsCount = words.size();
@@ -580,19 +612,96 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
             // 采用open nlp进行chunk
             ChunkerModel chunkerModel = ModelLoader.getChunkerModel();
             ChunkerME chunkerME = new ChunkerME(chunkerModel);
-            Span[] span = chunkerME.chunkAsSpans(toks, tags);
-            for (EventWithWord event : events) {
-                Word leftWord = event.getLeftWord();
-                Word negWord = event.getNegWord();
-                Word middleWord = event.getMiddleWord();
-                Word rightWord = event.getRightWord();
-                // TODO 将word扩充成phrase 2015-10-27 16:27:01
+            Span[] spans = chunkerME.chunkAsSpans(toks, tags);
+
+            for (EventWithPhrase event : events) {
+                List<Word> leftPhrase = event.getLeftPhrases();
+                List<Word> rightPhrase = event.getRightPhrases();
+
+                if(leftPhrase.size() == 1 || rightPhrase.size() == 1) {
+                    /**
+                     * 只处理单词数为1的主语和宾语
+                     */
+                    if(leftPhrase.size() == 1) {
+                        Word leftWord = leftPhrase.get(0);
+                        for (Span span : spans) {
+                            if(span.getStart() <= leftWord.getNumInLine()
+                                    && leftWord.getNumInLine() <= span.getEnd()
+                                    && (span.getEnd() - span.getStart()) > 1) {
+                                leftPhrase.clear();
+                                for (int i = span.getStart(); i < span.getEnd(); i++) {
+                                    leftPhrase.add(words.get(i + 1));
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    if(rightPhrase.size() == 1) {
+                        Word rightWord = rightPhrase.get(0);
+                        for (Span span : spans) {
+                            if(span.getStart() <= rightWord.getNumInLine()
+                                    && rightWord.getNumInLine() <= span.getEnd()
+                                    && (span.getEnd() - span.getStart()) > 1) {
+                                rightPhrase.clear();
+                                for (int i = span.getStart(); i < span.getEnd(); i++) {
+                                    rightPhrase.add(words.get(i + 1));
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    eventsInSentence.add(new EventWithPhrase(leftPhrase, event.getRightPhrases(), rightPhrase, event.getFilename()));
+
+                } else {
+
+                    eventsInSentence.add(event);
+
+                }
+
             }
+
         } catch (IOException e) {
             this.log.error("Load chunk model error!", e);
             throw new Exception(e);
         }
         return eventsInSentence;
+    }
+
+    /**
+     * 事件完善
+     *
+     * @param eventWithPhrases
+     * @param words
+     * @return
+     */
+    private List<EventWithPhrase> eventRepair(List<EventWithPhrase> eventWithPhrases, List<Word> words) {
+
+        List<EventWithPhrase> result = new ArrayList<EventWithPhrase>();
+
+        /**
+         * 1.如果两个事件，一个是三元事件，一个是二元事件，<br>
+         *   如果三元事件的宾语是二元事件的谓语，同时该词不是名词和命名实体，<br>
+         *   则将这两个事件合为一个事件
+         */
+
+        for(int i = 0; i < eventWithPhrases.size(); i++) {
+            for(int j = 0; j < eventWithPhrases.size(); j++) {
+
+            }
+        }
+
+        /**
+         * 2.如果一个事件的主语或者谓语是量词，<br>
+         *   则将该词替换成向前向后距离最近（不超过标点范围）的名词或命名实体
+         */
+
+        /**
+         * 3.如果一个事件缺失主语或者宾语，<br>
+         *   则向前向后找最近（不超过标点范围）的名词或命名实体进行补全
+         */
+
+        return result;
     }
 
     /**
