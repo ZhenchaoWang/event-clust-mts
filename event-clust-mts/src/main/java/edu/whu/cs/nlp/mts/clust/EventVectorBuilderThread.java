@@ -11,7 +11,7 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import edu.whu.cs.nlp.mts.domain.Event;
+import edu.whu.cs.nlp.mts.domain.EventWithWord;
 import edu.whu.cs.nlp.mts.domain.EventToId;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 import edu.whu.cs.nlp.mts.utils.CommonUtil;
@@ -54,10 +54,10 @@ public class EventVectorBuilderThread implements Runnable, SystemConstant{
             for (final String filename : filenames) {
                 try {
                     // 加载当前文件中的事件集合
-                    final List<Event> eventsInFile =
+                    final List<EventWithWord> eventsInFile =
                             FileUtil.loadEvents(this.topicDir + "/" + DIR_EVENTS + "/" + filename);
                     //对事件进行编号
-                    for (final Event event : eventsInFile) {
+                    for (final EventWithWord event : eventsInFile) {
                         //对事件进行编号，然后封装成对象存储
                         final EventToId event2Id = new EventToId();
                         event2Id.setEvent(event);

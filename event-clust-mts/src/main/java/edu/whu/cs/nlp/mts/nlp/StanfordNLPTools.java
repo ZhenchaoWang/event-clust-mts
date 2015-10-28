@@ -76,6 +76,7 @@ public class StanfordNLPTools implements SystemConstant{
                                     mention.mentionSpan, mention.corefClusterID, mention.startIndex, mention.endIndex, mention.sentNum, ref);
                             try {
                                 result.put(Encipher.MD5(element.getElement() + element.getSentNum() + element.getStartIndex() + element.getEndIndex()), element);
+                                //System.out.println(Encipher.MD5(element.getElement() + element.getSentNum() + element.getStartIndex() + element.getEndIndex()) + "\t" + element.getElement() + "\t" + element.getSentNum() + "\t" + element.getStartIndex() + "\t" + element.getEndIndex() + "\t->\t" + element.getRef().getElement());
                             } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
                                 log.error("MD5 encode error!", e);
                             }

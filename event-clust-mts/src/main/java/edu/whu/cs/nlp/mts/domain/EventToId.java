@@ -8,14 +8,14 @@ package edu.whu.cs.nlp.mts.domain;
  */
 public class EventToId {
 
-    private Event   event;
+    private EventWithWord   event;
     private Integer num;
 
     public EventToId() {
         super();
     }
 
-    public Event getEvent() {
+    public EventWithWord getEvent() {
         return this.event;
     }
 
@@ -23,7 +23,7 @@ public class EventToId {
         return this.num;
     }
 
-    public void setEvent(Event event) {
+    public void setEvent(EventWithWord event) {
         this.event = event;
     }
 

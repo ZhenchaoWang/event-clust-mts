@@ -47,7 +47,7 @@ public interface SystemConstant {
      */
     public final static String      DIR_PARSE                       = "parsed";
 
-    /**依存分析结果简版存放目录*/
+    /** 依存分析结果简版存放目录 */
     public static final String      DIR_PARSE_SIMPLE                = "parsed_simplify";
 
     /**
@@ -59,6 +59,12 @@ public interface SystemConstant {
      * 采用精简表示形式的事件所存放的目录
      */
     public final static String      DIR_SIMPLIFY_EVENT              = "events_simplify";
+
+    /** 存放依存分析处理后的事件 */
+    public static final String      DIR_CR_EVENTS                   = "cr_events";
+
+    /** 存放依存分析处理后事件的精简形式 */
+    public static final String      DIR_CR_SIMPLIFY_EVENT           = "cr_events_simplify";
 
     /**
      * node文件存放目录名称
@@ -300,7 +306,9 @@ public interface SystemConstant {
             add("dobj");
             add("nsubjpass");
             add("acomp");
-            //add("ccomp");  // ccomp不靠谱
+            // add("ccomp");
+            // //
+            // ccomp不靠谱
             add("xcomp");
         }
     };

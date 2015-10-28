@@ -9,7 +9,7 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
-import edu.whu.cs.nlp.mts.domain.Event;
+import edu.whu.cs.nlp.mts.domain.EventWithWord;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 import edu.whu.cs.nlp.mts.utils.EhCacheUtil;
 
@@ -36,7 +36,7 @@ public class VectorOperation implements SystemConstant{
      * @param event
      * @return 3：主-谓-宾；2：主-谓；1：谓-宾；0：未知事件
      */
-    private int eventType(Event event){
+    private int eventType(EventWithWord event){
         int type = 0;
         if(event.getLeftWord() != null
                 && event.getMiddleWord() != null
@@ -59,7 +59,7 @@ public class VectorOperation implements SystemConstant{
      * @return
      */
     @Deprecated
-    public double[] event2Vec(Event event, Map<String, Float[]> wordVec){
+    public double[] event2Vec(EventWithWord event, Map<String, Float[]> wordVec){
         double[] eventVec = null;
         if(event != null && wordVec != null){
             if(eventType(event) == 3){
@@ -137,7 +137,7 @@ public class VectorOperation implements SystemConstant{
      * @return
      * @throws SQLException
      */
-    public List<Double[]> event2Vecs(Event event) throws SQLException{
+    public List<Double[]> event2Vecs(EventWithWord event) throws SQLException{
         List<Double[]> eventVecs = new ArrayList<Double[]>();
         if(event != null){
             //创建一个值全为1的词向量
@@ -194,7 +194,7 @@ public class VectorOperation implements SystemConstant{
      */
     @Deprecated
     public double eventsApproximationDegree(
-            Event event1, Event event2, Map<String, Float[]> wordVec){
+            EventWithWord event1, EventWithWord event2, Map<String, Float[]> wordVec){
         double approx = 0;  //默认以最大值来表示两个事件之间的最大值
         if(event1 != null && event2 != null && wordVec != null){
             //计算得到两个事件的向量
@@ -229,7 +229,7 @@ public class VectorOperation implements SystemConstant{
      * @return
      * @throws SQLException
      */
-    public double eventsApproximationDegree(Event event1, Event event2) throws SQLException{
+    public double eventsApproximationDegree(EventWithWord event1, EventWithWord event2) throws SQLException{
         double approx = 0;  //默认以最大值来表示两个事件之间的最大值
         if(event1 != null && event2 != null){
             //计算得到两个事件的向量

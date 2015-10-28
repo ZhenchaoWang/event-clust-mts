@@ -4,8 +4,6 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 
-import edu.whu.cs.nlp.mts.sys.SystemConstant;
-
 /**
  * 原子事件<br>
  * 2.0版本中将主谓宾由单词扩充成短语
@@ -14,7 +12,7 @@ import edu.whu.cs.nlp.mts.sys.SystemConstant;
  * @version 2.0
  *
  */
-public class EventV2 implements SystemConstant {
+public class EventWithPhrase extends Event {
 
     private final List<Word> leftPhrases;   // 主语
     private final List<Word> middlePhrases; // 谓语
@@ -22,7 +20,7 @@ public class EventV2 implements SystemConstant {
     private final EventType  eventType;     // 事件类型
     private String     filename;      // 事件所属的文件名称
 
-    public EventV2(List<Word> leftPhrases, List<Word> middlePhrases, List<Word> rightPhrases, String filename) {
+    public EventWithPhrase(List<Word> leftPhrases, List<Word> middlePhrases, List<Word> rightPhrases, String filename) {
         super();
         this.leftPhrases = leftPhrases;
         this.middlePhrases = middlePhrases;
@@ -36,6 +34,7 @@ public class EventV2 implements SystemConstant {
      *
      * @return
      */
+    @Override
     public EventType eventType() {
         if (CollectionUtils.isNotEmpty(this.leftPhrases)
                 && CollectionUtils.isNotEmpty(this.middlePhrases)
@@ -87,29 +86,34 @@ public class EventV2 implements SystemConstant {
      *
      * @return
      */
+    @Override
     public String toShortString() {
+        StringBuilder result = new StringBuilder();
         final String SPLITER = ",";
         StringBuilder sb_left = new StringBuilder();
         if(CollectionUtils.isNotEmpty(this.leftPhrases)) {
             for (Word word : this.leftPhrases) {
-                sb_left.append(word.getName() + SPLITER);
+                sb_left.append(word.getLemma() + SPLITER);
             }
+            result.append(sb_left.substring(0, sb_left.lastIndexOf(SPLITER)));
         }
+        result.append(WORD_CONNECTOR);
         StringBuilder sb_middle = new StringBuilder();
         if(CollectionUtils.isNotEmpty(this.middlePhrases)) {
             for (Word word : this.middlePhrases) {
-                sb_middle.append(word.getName() + SPLITER);
+                sb_middle.append(word.getLemma() + SPLITER);
             }
+            result.append(sb_middle.substring(0, sb_middle.lastIndexOf(SPLITER)));
         }
+        result.append(WORD_CONNECTOR);
         StringBuilder sb_right = new StringBuilder();
         if(CollectionUtils.isNotEmpty(this.rightPhrases)) {
             for (Word word : this.rightPhrases) {
-                sb_right.append(word.getName() + SPLITER);
+                sb_right.append(word.getLemma() + SPLITER);
             }
+            result.append(sb_right.substring(0, sb_right.lastIndexOf(SPLITER)));
         }
-        return sb_left.substring(0, sb_left.lastIndexOf(SPLITER)) + WORD_CONNECTOR +
-                sb_middle.substring(0, sb_middle.lastIndexOf(SPLITER)) + WORD_CONNECTOR +
-                sb_right.substring(0, sb_right.lastIndexOf(SPLITER));
+        return result.toString();
     }
 
     @Override

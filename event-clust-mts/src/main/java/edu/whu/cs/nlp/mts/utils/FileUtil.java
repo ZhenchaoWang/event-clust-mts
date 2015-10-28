@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import edu.whu.cs.nlp.mts.domain.Event;
+import edu.whu.cs.nlp.mts.domain.EventWithWord;
 import edu.whu.cs.nlp.mts.domain.Word;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 
@@ -103,13 +103,13 @@ public class FileUtil implements SystemConstant{
      * @return
      * @throws IOException
      */
-    public static List<Event> loadEvents(String filepath) throws IOException{
-        List<Event> events = null;
+    public static List<EventWithWord> loadEvents(String filepath) throws IOException{
+        List<EventWithWord> events = null;
         BufferedReader br = null;
         try {
             br = new BufferedReader(new InputStreamReader(new FileInputStream(filepath), DEFAULT_CHARSET));
             String lineStr = null;
-            events = new ArrayList<Event>();
+            events = new ArrayList<EventWithWord>();
             final String regex_filename = "\\[\\$[\\w\\.]*?\\$\\]";
             final Pattern p_filename = Pattern.compile(regex_filename);
             while(((lineStr = br.readLine()) != null)){
@@ -146,7 +146,7 @@ public class FileUtil implements SystemConstant{
                             }else {
                                 log.error("当前事件类型不支持");
                             }
-                            events.add(new Event(leftWord, middleWord, rightWord, filename));
+                            events.add(new EventWithWord(leftWord, middleWord, rightWord, filename));
                         }
                     }
                 }
