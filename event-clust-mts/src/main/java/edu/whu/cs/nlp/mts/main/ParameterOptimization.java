@@ -151,13 +151,13 @@ public class ParameterOptimization implements SystemConstant{
                 //edges存放文件夹
                 final String edgeDir = workDir + "/" + DIR_EDGES;
                 //对上面的文件夹进行清理
-                final File fileEdgesCW = new File(edgeDir + "/" + DIR_CW);
+                final File fileEdgesCW = new File(edgeDir + "/" + DIR_CW_PRETREAT);
                 if(fileEdgesCW.exists()){
                     fileEdgesCW.delete();
                 }
 
                 //聚类结果存放文件夹
-                final String clustResultDir = workDir + "/" + DIR_CW_RESULT;
+                final String clustResultDir = workDir + "/" + DIR_EVENTS_CLUST;
                 final File fileClustResult = new File(clustResultDir);
                 if(fileClustResult.exists()){
                     fileClustResult.delete();
@@ -165,7 +165,7 @@ public class ParameterOptimization implements SystemConstant{
                 fileClustResult.mkdirs();
 
                 //句子抽取结果存放的文件夹
-                final String sentencesSaveDir = workDir + "/" + DIR_EXTRACTED_SETENCES;
+                final String sentencesSaveDir = workDir + "/" + DIR_SUB_SENTENCES_EXTRACTED;
                 final File fileSentences = new File(sentencesSaveDir);
                 if(fileSentences.exists()){
                     fileSentences.delete();
@@ -173,7 +173,7 @@ public class ParameterOptimization implements SystemConstant{
                 fileSentences.mkdirs();
 
                 //句子压缩结果存放的文件夹
-                final String sentencesCompressDir = workDir + "/" + DIR_COMPRESS;
+                final String sentencesCompressDir = workDir + "/" + DIR_SENTENCES_COMPRESSION;
                 final File fileSentencesCompress = new File(sentencesCompressDir);
                 if(fileSentencesCompress.exists()){
                     fileSentencesCompress.delete();

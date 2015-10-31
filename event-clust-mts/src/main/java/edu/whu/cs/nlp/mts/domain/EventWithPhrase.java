@@ -97,7 +97,7 @@ public class EventWithPhrase extends Event {
             }
             result.append(sb_left.substring(0, sb_left.lastIndexOf(SPLITER)));
         }
-        result.append(WORD_CONNECTOR);
+        result.append(WORD_CONNECTOR_IN_EVENTS);
         StringBuilder sb_middle = new StringBuilder();
         if(CollectionUtils.isNotEmpty(this.middlePhrases)) {
             for (Word word : this.middlePhrases) {
@@ -105,7 +105,7 @@ public class EventWithPhrase extends Event {
             }
             result.append(sb_middle.substring(0, sb_middle.lastIndexOf(SPLITER)));
         }
-        result.append(WORD_CONNECTOR);
+        result.append(WORD_CONNECTOR_IN_EVENTS);
         StringBuilder sb_right = new StringBuilder();
         if(CollectionUtils.isNotEmpty(this.rightPhrases)) {
             for (Word word : this.rightPhrases) {
@@ -118,8 +118,8 @@ public class EventWithPhrase extends Event {
 
     @Override
     public String toString() {
-        return  (CollectionUtils.isEmpty(this.leftPhrases) ? "" : this.leftPhrases.toString()) + WORD_CONNECTOR
-                + (CollectionUtils.isEmpty(this.middlePhrases) ? "" : this.middlePhrases.toString()) + WORD_CONNECTOR
+        return  (CollectionUtils.isEmpty(this.leftPhrases) ? "" : this.leftPhrases.toString()) + WORD_CONNECTOR_IN_EVENTS
+                + (CollectionUtils.isEmpty(this.middlePhrases) ? "" : this.middlePhrases.toString()) + WORD_CONNECTOR_IN_EVENTS
                 + (CollectionUtils.isEmpty(this.rightPhrases) ? "" : this.rightPhrases.toString()) + FILENAME_REST_LEFT + this.filename + FILENAME_REST_RIGHT;
     }
 

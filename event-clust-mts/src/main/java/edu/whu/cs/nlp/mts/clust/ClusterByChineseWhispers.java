@@ -128,7 +128,7 @@ public class ClusterByChineseWhispers implements SystemConstant{
 
             for (final String filename : filenames) {
                 final String nodeFileName = this.nodesDir + "/" + filename;
-                final String edgeFileName = this.edgeDir + "/" + DIR_CW + "/" + filename.replace(".node", ".edge");
+                final String edgeFileName = this.edgeDir + "/" + DIR_CW_PRETREAT + "/" + filename.replace(".node", ".edge");
                 // 计算边的阈值
                 final int edgeThreshHole = calculateThreshold4edgeweight(edgeFileName);
                 cwRunParam.setEdgeWeightThreshold(edgeThreshHole);

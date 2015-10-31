@@ -172,15 +172,15 @@ public class SentenceExtractThread implements Callable<Boolean>, SystemConstant{
                 final String str = matcher.group();
                 final String filename = str.substring(2, str.length() - 2);
                 event = event.replaceAll(regex_filename, "");  //删除当前事件中的所属文件名信息
-                final String[] words = event.split(WORD_CONNECTOR);
+                final String[] words = event.split(WORD_CONNECTOR_IN_EVENTS);
                 Word leftWord = null, middleWord = null, rightWord = null;
                 // 分三种情况来对事件进行封装
-                if (words.length == 3 && !event.startsWith(WORD_CONNECTOR)) {
+                if (words.length == 3 && !event.startsWith(WORD_CONNECTOR_IN_EVENTS)) {
                     leftWord = CommonUtil.str2Word(words[0]);
                     middleWord = CommonUtil.str2Word(words[1]);
                     rightWord = CommonUtil.str2Word(words[2]);
-                } else if (words.length == 2 || event.startsWith(WORD_CONNECTOR)) {
-                    if (event.startsWith(WORD_CONNECTOR)) {
+                } else if (words.length == 2 || event.startsWith(WORD_CONNECTOR_IN_EVENTS)) {
+                    if (event.startsWith(WORD_CONNECTOR_IN_EVENTS)) {
                         middleWord = CommonUtil.str2Word(words[1]);
                         rightWord = CommonUtil.str2Word(words[2]);
                     } else {
@@ -201,18 +201,18 @@ public class SentenceExtractThread implements Callable<Boolean>, SystemConstant{
                     //加载正文
                     try {
                         textList = CommonUtil.str2List(
-                                FileUtil.read(this.textDir + "/" + topicName + "/" + DIR_CR_TEXT + "/" + filename, DEFAULT_CHARSET));
+                                FileUtil.read(this.textDir + "/" + topicName + "/" + DIR_SEG_TEXT + "/" + filename, DEFAULT_CHARSET));
                     } catch (final IOException e) {
-                        this.log.error("加载文件失败：" + this.textDir + "/" + topicName + "/" + DIR_CR_TEXT + "/" + filename, e);
+                        this.log.error("加载文件失败：" + this.textDir + "/" + topicName + "/" + DIR_SEG_TEXT + "/" + filename, e);
                         //e.printStackTrace();
                     }
                 }
                 if(detailTextList == null){
                     try {
                         detailTextList =
-                                FileUtil.loadText(this.textDir + "/" + topicName + "/" + DIR_CR_TEXT_DETAIL + "/" + filename, DEFAULT_CHARSET);
+                                FileUtil.loadText(this.textDir + "/" + topicName + "/" + DIR_SEGDETAIL_TEXT + "/" + filename, DEFAULT_CHARSET);
                     } catch (final IOException e) {
-                        this.log.error("加载文件失败：" + this.textDir + "/" + topicName + "/" + DIR_CR_TEXT_DETAIL + "/" + filename, e);
+                        this.log.error("加载文件失败：" + this.textDir + "/" + topicName + "/" + DIR_SEGDETAIL_TEXT + "/" + filename, e);
                         //e.printStackTrace();
                     }
                 }
@@ -258,7 +258,7 @@ public class SentenceExtractThread implements Callable<Boolean>, SystemConstant{
                             this.log.error("无法映射事件对应的子句:\n左词：" + (leftWord == null ? "" : leftWord.getName()) +
                                     "\n中词：" + (middleWord == null ? "" : middleWord.getName()) +
                                     "\n右词：" + (rightWord == null ? "" : rightWord.getName()) +
-                                    "\n文件路径：" + this.textDir + "/" + topicName + "/" + DIR_CR_TEXT + "/" + filename);
+                                    "\n文件路径：" + this.textDir + "/" + topicName + "/" + DIR_SEG_TEXT + "/" + filename);
                             final StringBuilder tmp = new StringBuilder();
                             for (final String subSent : subSentList) {
                                 tmp.append(subSent + LINE_SPLITER);

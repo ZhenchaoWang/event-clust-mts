@@ -129,14 +129,14 @@ public class FileUtil implements SystemConstant{
                         if(filename == null) {
                             log.error("提取事件所属文件名失败：" + event_str);
                         }else{
-                            final String[] word_str = event_str.split(WORD_CONNECTOR);
+                            final String[] word_str = event_str.split(WORD_CONNECTOR_IN_EVENTS);
                             //分三种情况来对事件进行封装
-                            if(word_str.length == 3 && !event_str.startsWith(WORD_CONNECTOR)){
+                            if(word_str.length == 3 && !event_str.startsWith(WORD_CONNECTOR_IN_EVENTS)){
                                 leftWord = CommonUtil.str2Word(word_str[0]);
                                 middleWord = CommonUtil.str2Word(word_str[1]);
                                 rightWord = CommonUtil.str2Word(word_str[2]);
-                            }else if(word_str.length == 2 || event_str.startsWith(WORD_CONNECTOR)){
-                                if(event_str.startsWith(WORD_CONNECTOR)){
+                            }else if(word_str.length == 2 || event_str.startsWith(WORD_CONNECTOR_IN_EVENTS)){
+                                if(event_str.startsWith(WORD_CONNECTOR_IN_EVENTS)){
                                     middleWord = CommonUtil.str2Word(word_str[1]);
                                     rightWord = CommonUtil.str2Word(word_str[2]);
                                 }else{

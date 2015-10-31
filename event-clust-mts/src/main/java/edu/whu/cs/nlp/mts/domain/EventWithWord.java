@@ -96,9 +96,9 @@ public class EventWithWord extends Event {
      */
     @Override
     public String toShortString() {
-        return (this.leftWord == null ? "" : this.leftWord.getLemma()) + WORD_CONNECTOR
+        return (this.leftWord == null ? "" : this.leftWord.getLemma()) + WORD_CONNECTOR_IN_EVENTS
                 + (this.negWord == null ? "" : (this.negWord.getLemma() + " "))
-                + (this.middleWord == null ? "" : this.middleWord.getLemma()) + WORD_CONNECTOR
+                + (this.middleWord == null ? "" : this.middleWord.getLemma()) + WORD_CONNECTOR_IN_EVENTS
                 + (this.rightWord == null ? "" : this.rightWord.getLemma());
     }
 
@@ -107,10 +107,10 @@ public class EventWithWord extends Event {
      */
     @Override
     public String toString() {
-        return (this.leftWord == null ? "" : this.leftWord) + WORD_CONNECTOR
+        return (this.leftWord == null ? "" : this.leftWord) + WORD_CONNECTOR_IN_EVENTS
                 + (this.middleWord == null ? "" : (this.middleWord + " "))
                 + (this.middleWord == null ? "" : this.middleWord)
-                + WORD_CONNECTOR + (this.rightWord == null ? "" : this.rightWord)
+                + WORD_CONNECTOR_IN_EVENTS + (this.rightWord == null ? "" : this.rightWord)
                 + FILENAME_REST_LEFT + this.filename + FILENAME_REST_RIGHT;
     }
 

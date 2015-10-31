@@ -12,117 +12,84 @@ import java.util.Set;
  */
 public interface SystemConstant {
 
-    /**
-     * 系统默认字符编码
-     */
+    /** 系统默认字符编码 */
     public final static Charset     DEFAULT_CHARSET                 = Charset.forName("UTF-8");
 
-    /**
-     * 统一换行符，采用linux风格
-     */
+    /** 统一换行符，采用linux风格 */
     public final static String      LINE_SPLITER                    = "\n";
 
-    /**
-     * 一个单词中所有属性的连接符，用于打印时进行组织
-     */
+    /** 一个单词中所有属性的连接符，用于打印时进行组织 */
     public final static String      WORD_ATTRBUTE_CONNECTOR         = "__";
 
-    /**
-     * 经过句子切分之后的文本所存放的目录
-     */
-    public final static String      DIR_TEXT                        = "seg_text";
+    /** 目录名：原文本 */
+    public final static String      DIR_TEXT                        = "text";
 
-    /**
-     * 经过指代消解之后的文本所存放的目录名
-     */
-    public final static String      DIR_CR_TEXT                     = "cr_seg_text";
+    /** 目录名：句子切分 */
+    public final static String      DIR_SEG_TEXT                    = "text_seg";
 
-    /**
-     * 经过指代消解之后的文本详细信息存放的目录名
-     */
-    public final static String      DIR_CR_TEXT_DETAIL              = "cr_seg_text_detail";
+    /** 目录名：句子切分（详细） */
+    public final static String      DIR_SEGDETAIL_TEXT              = "text_seg-detail";
 
-    /**
-     * 依存分析结果存放目录名
-     */
-    public final static String      DIR_PARSE                       = "parsed";
+    /** 目录名：依存分析 */
+    public final static String      DIR_PARSE_TEXT                  = "text_parse";
 
-    /** 依存分析结果简版存放目录 */
-    public static final String      DIR_PARSE_SIMPLE                = "parsed_simplify";
+    /** 目录名：依存分析（简版） */
+    public static final String      DIR_PARSESIMPLIFY               = "text_parse-simplify";
 
-    /**
-     * 存放事件抽取结果的目录名
-     */
+    /** 目录名：事件抽取 */
     public final static String      DIR_EVENTS                      = "events";
 
-    /**
-     * 采用精简表示形式的事件所存放的目录
-     */
-    public final static String      DIR_SIMPLIFY_EVENT              = "events_simplify";
+    /** 目录名：事件抽取（简版） */
+    public final static String      DIR_EVENTSSIMPLIFY              = "events-simplify";
 
-    /** 存放依存分析处理后的事件 */
-    public static final String      DIR_CR_EVENTS                   = "cr_events";
+    /** 目录名：指代消解 */
+    public static final String      DIR_CR_EVENTS                   = "events_cr";
 
-    /** 存放依存分析处理后事件的精简形式 */
-    public static final String      DIR_CR_SIMPLIFY_EVENT           = "cr_events_simplify";
+    /** 目录名：指代消解（简版） */
+    public static final String      DIR_CR_EVENTSSIMPLIFY           = "events_cr-simplify";
 
-    /** 存放事件修复处理后的事件 */
-    public static final String      DIR_CR_RP_EVENTS                   = "cr_rp_events";
+    /** 目录名：事件修复 */
+    public static final String      DIR_CR_RP_EVENTS                = "events_cr_rp";
 
-    /** 存放事件修复处理后事件的精简形式 */
-    public static final String      DIR_CR_RP_SIMPLIFY_EVENT           = "cr_rp_events_simplify";
+    /** 目录名：事件修复（简版） */
+    public static final String      DIR_CR_RP_EVENTSSIMPLIFY        = "events_cr_rp-simplify";
 
-    /** 存放短语扩充处理后的事件 */
-    public static final String      DIR_CR_RP_PE_EVENTS                   = "cr_rp_pe_events";
+    /** 目录名：短语扩充 */
+    public static final String      DIR_CR_RP_PE_EVENTS             = "events_cr_rp_pe";
 
-    /** 存放短语扩充处理后事件的精简形式 */
-    public static final String      DIR_CR_RP_PE_SIMPLIFY_EVENT           = "cr_rp_pe_events_simplify";
+    /** 目录名：短语扩充（简版） */
+    public static final String      DIR_CR_RP_PE_EVENTSSIMPLIFY     = "events_cr_rp_pe-simplify";
 
-    /**
-     * node文件存放目录名称
-     */
+    /** 目录名：node文件 */
     public final static String      DIR_NODES                       = "nodes";
 
-    /**
-     * edge文件存放目录名称
-     */
+    /** 目录名：edge文件 */
     public final static String      DIR_EDGES                       = "edges";
 
-    /**
-     * 词性标注结果存放目录名
-     */
+    /** 目录名：词性标注 */
     public final static String      DIR_TAGGED                      = "tagged";
 
-    /**
-     * 事件聚类结果存放文件名
-     */
-    public final static String      DIR_CW_RESULT                   = "cw_result";
+    /** 目录名：事件聚类 */
+    public final static String      DIR_EVENTS_CLUST                = "events-clust";
 
-    /**
-     * 抽取的子句存放文件名
-     */
-    public final static String      DIR_EXTRACTED_SETENCES          = "extracted_sentences";
+    /** 目录名：子句抽取 */
+    public final static String      DIR_SUB_SENTENCES_EXTRACTED     = "sub-sentences";
 
-    /**
-     * 口哨算法预处理结果存放路径
-     */
-    public final static String      DIR_CW                          = "cw";
+    /** 目录名：口哨算法预处理 */
+    public final static String      DIR_CW_PRETREAT                 = "cw_pretreat";
 
-    /**
-     * 句子压缩结果存放的文件夹
-     */
-    public final static String      DIR_COMPRESS                    = "compress";
+    /** 目录名：多语句压缩 */
+    public final static String      DIR_SENTENCES_COMPRESSION       = "sentences-compression";
 
     /**
      * 事件中词之间的连接符
      */
-    public final static String      WORD_CONNECTOR                  = "#";
+    public final static String      WORD_CONNECTOR_IN_EVENTS                  = "#";
 
     /**
      * 事件中文件名的左右分割符
      */
-    public final static String      FILENAME_REST_LEFT              = "[$",
-            FILENAME_REST_RIGHT = "$]";
+    public final static String      FILENAME_REST_LEFT              = "[$", FILENAME_REST_RIGHT = "$]";
 
     /**
      * 选择非最大相似度的权值

@@ -194,7 +194,7 @@ public class Pretreatment implements SystemConstant {
                 }
                 if (edgeInfos.length() > 0) {
                     final String edgeInfosStr = CommonUtil.cutLastLineSpliter(edgeInfos.toString());
-                    FileUtil.write(edgeDir + "/" + DIR_CW + "/" + filename, edgeInfosStr, DEFAULT_CHARSET);
+                    FileUtil.write(edgeDir + "/" + DIR_CW_PRETREAT + "/" + filename, edgeInfosStr, DEFAULT_CHARSET);
                 }
             } finally {
                 if (br != null) {

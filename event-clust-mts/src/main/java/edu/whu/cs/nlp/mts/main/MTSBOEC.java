@@ -132,8 +132,8 @@ public class MTSBOEC implements SystemConstant{
             log.info(">> events clusting & sub sentences extracting");
             final String nodesDir = workDir + "/" + DIR_NODES;
             final String edgeDir = workDir + "/" + DIR_EDGES;
-            final String clustResultDir = workDir + "/" + DIR_CW_RESULT;
-            final String sentencesSaveDir = workDir + "/" + DIR_EXTRACTED_SETENCES;
+            final String clustResultDir = workDir + "/" + DIR_EVENTS_CLUST;
+            final String sentencesSaveDir = workDir + "/" + DIR_SUB_SENTENCES_EXTRACTED;
             final String moduleFilePath = workDir + "/en-pos-maxent.bin";
             final String dictPath = properties.getProperty("dictPath");
             final float edgeSelectedWeight = 3.2f;  //边阈值增加权重

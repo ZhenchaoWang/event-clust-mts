@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -66,19 +67,19 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
     private final Logger log = Logger.getLogger(this.getClass());
 
     /**获取切分后的句子集合的Key*/
-    public static final String SEGED_TEXT = "SEGED_TEXT";
+    public static final String KEY_SEGED_TEXT = "SEGED_TEXT";
 
     /**获取切分后的句子详细信息的key*/
-    public static final String SEGED_TEXT_DETAIL = "SEGED_TEXT_DETAIL";
+    public static final String KEY_SEGED_DETAIL_TEXT = "SEGED_DETAIL_TEXT";
 
     /**获取仅包含词性的文本信息*/
-    public static final String SEGED_TEXT_POS = "SEGED_TEXT_POS";
+    public static final String KEY_SEGED_POS_TEXT = "SEGED_POS_TEXT";
 
     /**获取所有词的对象信息*/
-    public static final String WORDS = "WORDS";
+    public static final String KEY_WORDS = "WORDS";
 
     /**获取所有词的依存关系集合*/
-    public static final String PARSED_ITEMS = "PARSED_ITEMS";
+    public static final String KEY_PARSED_ITEMS = "PARSED_ITEMS";
 
     private final StanfordCoreNLP pipeline;
     /**输入文件所在目录*/
@@ -122,23 +123,23 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 Map<String, Object> coreNlpResults =  this.coreNlpOperate(text);
 
                 //获取句子切分后的文本
-                String segedtext = (String) coreNlpResults.get(SEGED_TEXT);
+                String segedtext = (String) coreNlpResults.get(KEY_SEGED_TEXT);
                 /*中间结果记录：记录句子切分后的文本*/
-                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_TEXT, file.getName()), segedtext, DEFAULT_CHARSET);
+                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_SEG_TEXT, file.getName()), segedtext, DEFAULT_CHARSET);
 
                 //获取句子切分后的文本详细信息
-                String segedTextDetail = (String) coreNlpResults.get(SEGED_TEXT_DETAIL);
+                String segedTextDetail = (String) coreNlpResults.get(KEY_SEGED_DETAIL_TEXT);
                 /*中间结果记录：记录句子切分后的文本详细信息*/
-                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_TEXT_DETAIL, file.getName()), segedTextDetail, DEFAULT_CHARSET);
+                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_SEGDETAIL_TEXT, file.getName()), segedTextDetail, DEFAULT_CHARSET);
 
                 //获取句子切分后的带有词性的文本信息
-                String segedTextPOS = (String) coreNlpResults.get(SEGED_TEXT_POS);
+                String segedTextPOS = (String) coreNlpResults.get(KEY_SEGED_POS_TEXT);
                 /*中间结果记录：记录句子切分后的带有词性的文本信息*/
-                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_TEXT_DETAIL + "/pos", file.getName()), segedTextPOS, DEFAULT_CHARSET);
+                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_SEGDETAIL_TEXT + "/pos", file.getName()), segedTextPOS, DEFAULT_CHARSET);
 
                 //获取对句子中单词进行对象化后的文本
                 @SuppressWarnings("unchecked")
-                List<List<Word>> words = (List<List<Word>>) coreNlpResults.get(WORDS);
+                List<List<Word>> words = (List<List<Word>>) coreNlpResults.get(KEY_WORDS);
 
                 StringBuilder sb_words_pos = new StringBuilder();
                 for (List<Word> list : words) {
@@ -153,13 +154,13 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 }
                 /*中间结果记录：词和词性分开按行存储*/
                 FileUtils.writeStringToFile(
-                        FileUtils.getFile(parentPath + "/" + DIR_CR_TEXT_DETAIL + "/pos2/", file.getName()),
+                        FileUtils.getFile(parentPath + "/" + DIR_SEGDETAIL_TEXT + "/pos2/", file.getName()),
                         CommonUtil.cutLastLineSpliter(sb_words_pos.toString()), DEFAULT_CHARSET);
 
                 //获取依存分析结果
                 @SuppressWarnings("unchecked")
-                List<List<ParseItem>> parseItemList = (List<List<ParseItem>>) coreNlpResults.get(PARSED_ITEMS);
-                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_PARSE, file.getName()), CommonUtil.lists2String(parseItemList), DEFAULT_CHARSET);
+                List<List<ParseItem>> parseItemList = (List<List<ParseItem>>) coreNlpResults.get(KEY_PARSED_ITEMS);
+                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_PARSE_TEXT, file.getName()), CommonUtil.lists2String(parseItemList), DEFAULT_CHARSET);
 
                 /*中间结果记录：记录依存分析简版结果*/
                 StringBuilder simplifyParsedResult = new StringBuilder();
@@ -169,7 +170,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                     simplifyParsedResult.append(LINE_SPLITER);
                 }
                 FileUtils.writeStringToFile(
-                        FileUtils.getFile(parentPath + "/" + DIR_PARSE_SIMPLE, file.getName()),
+                        FileUtils.getFile(parentPath + "/" + DIR_PARSESIMPLIFY, file.getName()),
                         CommonUtil.cutLastLineSpliter(simplifyParsedResult.toString()),
                         DEFAULT_CHARSET);
 
@@ -184,7 +185,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                     sb_simplify_events.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
                 }
                 FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events.toString()), DEFAULT_CHARSET);
-                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_SIMPLIFY_EVENT, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events.toString()), DEFAULT_CHARSET);
+                FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_EVENTSSIMPLIFY, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events.toString()), DEFAULT_CHARSET);
 
                 /**
                  * 指代消解
@@ -228,7 +229,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                         sb_simplify_events_phrase.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
                     }
                     FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
-                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_SIMPLIFY_EVENT, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_EVENTSSIMPLIFY, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
 
                 } catch (Throwable e) {
 
@@ -256,7 +257,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                         sb_simplify_events_phrase.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
                     }
                     FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
-                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_SIMPLIFY_EVENT, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_EVENTSSIMPLIFY, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
 
                 } catch (Throwable e) {
 
@@ -285,7 +286,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                         sb_simplify_events_phrase.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
                     }
                     FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
-                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_SIMPLIFY_EVENT, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_EVENTSSIMPLIFY, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
 
                 } catch (Throwable e) {
 
@@ -431,11 +432,11 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
         }
 
         //缓存处理的结果，用于返回
-        coreNlpResults.put(SEGED_TEXT, CommonUtil.cutLastLineSpliter(textAfterSSeg.toString()));
-        coreNlpResults.put(SEGED_TEXT_DETAIL, CommonUtil.cutLastLineSpliter(textAfterSsegDetail.toString()));
-        coreNlpResults.put(SEGED_TEXT_POS, CommonUtil.cutLastLineSpliter(textWithPOS.toString()));
-        coreNlpResults.put(WORDS, wordsList);
-        coreNlpResults.put(PARSED_ITEMS, parseItemList);
+        coreNlpResults.put(KEY_SEGED_TEXT, CommonUtil.cutLastLineSpliter(textAfterSSeg.toString()));
+        coreNlpResults.put(KEY_SEGED_DETAIL_TEXT, CommonUtil.cutLastLineSpliter(textAfterSsegDetail.toString()));
+        coreNlpResults.put(KEY_SEGED_POS_TEXT, CommonUtil.cutLastLineSpliter(textWithPOS.toString()));
+        coreNlpResults.put(KEY_WORDS, wordsList);
+        coreNlpResults.put(KEY_PARSED_ITEMS, parseItemList);
 
         return coreNlpResults;
 
@@ -719,10 +720,11 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 // 过滤掉宾语为短语的事件
                 continue;
             }
+            Word t_event_right_word = t_event.getRightPhrases().get(0);
             for(j = i + 1; j < eventWithPhrases.size(); j++) {
                 EventWithPhrase b_event = eventWithPhrases.get(j);
 
-                if(EventType.LEFT_MISSING.equals(b_event.eventType())) {
+                if(!EventType.LEFT_MISSING.equals(b_event.eventType())) {
                     continue;
                 }
 
@@ -731,9 +733,8 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                     continue;
                 }
 
-                Word t_event_right_word = t_event.getRightPhrases().get(0);
-                Word b_event_left_word = b_event.getLeftPhrases().get(0);
-                if(t_event_right_word.equals(b_event_left_word)) {
+                Word b_event_middle_word = b_event.getMiddlePhrases().get(0);
+                if(t_event_right_word.equals(b_event_middle_word)) {
                     /**
                      * 三元事件的宾语与二元事件的谓语相同，可以合并为一个事件
                      * 合并规则：
@@ -760,7 +761,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
 
         /**
          *
-         * 2.如果一个事件的主语或者谓语是限定词，<br>
+         * 2.如果一个事件的主语或者宾语是限定词，<br>
          *   则将该词替换成向后距离最近（不超过标点范围）的名词或命名实体
          *
          * 3.如果一个事件缺失主语或者宾语，<br>
@@ -771,16 +772,19 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
             EventWithPhrase eventWithPhrase = eventWithPhrases.get(k);
 
             if(CollectionUtils.isNotEmpty(eventWithPhrase.getLeftPhrases())) {
+                // 存在主语
                 if(eventWithPhrase.getLeftPhrases().size() == 1) {
-                    // 主语
+                    // 主语是词语
                     Word leftWord = eventWithPhrase.getLeftPhrases().get(0);
+                    int indexOfVerb = eventWithPhrase.getMiddlePhrases().get(0).getNumInLine();
                     if("DT".equals(leftWord.getPos())) {
-                        for(int n = leftWord.getNumInLine() + 1; n < words.size(); n++) {
+                        for(int n = leftWord.getNumInLine() + 1; n < indexOfVerb; n++) {
                             Word word = words.get(n);
                             if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
                                 leftWord = word;
                             }
-                            if("PUNT".equals(word.getPos())) {
+                            if(word.getName().equals(word.getPos())) {
+                                // 标点的pos等于其本身
                                 break;
                             }
                         }
@@ -788,21 +792,20 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 }
             } else {
                 // 主语缺失，向前找标点范围内的最近的名词或命名实体
-                Word middleWord = eventWithPhrase.getMiddlePhrases().get(0);
+                // FIXME 临时屏蔽 2015-10-31 21:47:31
+                /*Word middleWord = eventWithPhrase.getMiddlePhrases().get(0);
                 for(int n = middleWord.getNumInLine() - 1; n > 0; n--) {
                     Word word = words.get(n);
                     if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
                         eventWithPhrase.getLeftPhrases().add(word);
                     }
-                    if("PUNT".equals(word.getPos())) {
-                        break;
-                    }
-                }
+                }*/
             }
 
             if(CollectionUtils.isNotEmpty(eventWithPhrase.getRightPhrases())) {
+                // 宾语存在
                 if(eventWithPhrase.getRightPhrases().size() == 1) {
-                    // 宾语
+                    // 宾语为单词
                     Word rightWord = eventWithPhrase.getRightPhrases().get(0);
                     if("DT".equals(rightWord.getPos())) {
                         for(int n = rightWord.getNumInLine() + 1; n < words.size(); n++) {
@@ -810,7 +813,8 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                             if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
                                 rightWord = word;
                             }
-                            if("PUNT".equals(word.getPos())) {
+                            if(word.getName().equals(word.getPos())) {
+                                // 当前为标点，标点的pos等于本身
                                 break;
                             }
                         }
@@ -818,7 +822,8 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 }
             } else {
                 // 宾语缺失，向后找标点范围内最近的名词或命名实体
-                List<Word> middlePhrase = eventWithPhrase.getMiddlePhrases();
+                // FIXME 临时屏蔽 2015-10-31 21:48:05
+                /*List<Word> middlePhrase = eventWithPhrase.getMiddlePhrases();
                 Word middleWord = null;
                 if(middlePhrase.size() == 2) {
                     middleWord = middlePhrase.get(1);
@@ -830,10 +835,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                     if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
                         eventWithPhrase.getRightPhrases().add(word);
                     }
-                    if("PUNT".equals(word.getPos())) {
-                        break;
-                    }
-                }
+                }*/
             }
 
         }
@@ -1042,8 +1044,10 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
     /**
      * 事件抽取测试
      * @param args
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
@@ -1057,6 +1061,11 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
         ExecutorService es = Executors.newFixedThreadPool(4);
         Future<Boolean> future = es.submit(new EventsExtractBasedOnGraphV2("E:/workspace/optimization/singleText"));
         es.shutdown();
+        if(future.get()) {
+            System.out.println("success!");
+        } else {
+            System.out.println("failed!");
+        }
     }
 
 }

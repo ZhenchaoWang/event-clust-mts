@@ -51,7 +51,7 @@ public class SummaryBuilder implements SystemConstant{
 
         final String workdir = properties.getProperty("workDir");
         final Integer threadNum = Integer.parseInt(properties.getProperty("threadNum"));
-        final File compressDir = new File(workdir + "/" + DIR_COMPRESS);
+        final File compressDir = new File(workdir + "/" + DIR_SENTENCES_COMPRESSION);
         final String[] filenames = compressDir.list();
         final ExecutorService executorService = Executors.newFixedThreadPool(threadNum);
         for (final String filename : filenames) {
@@ -62,7 +62,7 @@ public class SummaryBuilder implements SystemConstant{
                     + ".M.250." + filename.substring(filename.length() - 1) + ".3";
             executorService.execute(
                     new CompressedSentencesSelectThread(
-                            workdir + "/" + DIR_COMPRESS + "/" + filename,
+                            workdir + "/" + DIR_SENTENCES_COMPRESSION + "/" + filename,
                             workdir + "/summaries/" + summaryFilename, question));
         }
         executorService.shutdown();
