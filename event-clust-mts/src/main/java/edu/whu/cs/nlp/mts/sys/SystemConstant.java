@@ -84,16 +84,15 @@ public interface SystemConstant {
     /**
      * 事件中词之间的连接符
      */
-    public final static String      WORD_CONNECTOR_IN_EVENTS                  = "#";
+    public final static String      WORD_CONNECTOR_IN_EVENTS        = "#";
 
-    /**
-     * 事件中文件名的左右分割符
-     */
-    public final static String      FILENAME_REST_LEFT              = "[$", FILENAME_REST_RIGHT = "$]";
+    /** 事件所在文件名标记符：左 */
+    public final static String      FILENAME_REST_LEFT              = "[$";
 
-    /**
-     * 选择非最大相似度的权值
-     */
+    /** 事件所在文件名标记符：右 */
+    public final static String      FILENAME_REST_RIGHT             = "$]";
+
+    /** 选择非最大相似度的权值 */
     public final static int         VARIATION_WEIGHT                = 80;
 
     /**
@@ -107,33 +106,10 @@ public interface SystemConstant {
     public final static int         MAX_SUMMARY_WORDS_COUNT         = 250;
 
     /**
-     * 人称指代
-     *//*
-     * public final static Set<String> PERSON_PRONOUN2 = new HashSet<String>()
-     * {
-     *
-     * private static final long serialVersionUID = -1988404852361670496L;
-     *
-     * { add("he"); add("she"); add("it"); add("they"); add("who"); } };
-     */
-
-    /**
-     * 人称指代
-     */
-    public final static Set<String> POS_PERSON_PRONOUN              = new HashSet<String>() {
-        private static final long serialVersionUID = 3536875708378397981L;
-
-        {
-            add("PRP");
-        }
-    };
-
-    /**
      * 人称代词 + 所有格代词
      */
-    public final static Set<String> POS_PRONOUN                     = new HashSet<String>() {
+    public final static Set<String> POS_PRP                         = new HashSet<String>() {
         private static final long serialVersionUID = 3536875708378397981L;
-
         {
             add("PRP");
             add("PRP$");
@@ -285,9 +261,6 @@ public interface SystemConstant {
             add("dobj");
             add("nsubjpass");
             add("acomp");
-            // add("ccomp");
-            // //
-            // ccomp不靠谱
             add("xcomp");
         }
     };

@@ -249,15 +249,15 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                 if (event.getLeftWord().getName().equalsIgnoreCase(event.getRightWord().getName())
                         || "be".equalsIgnoreCase(event.getLeftWord().getLemma())
                         || "be".equalsIgnoreCase(event.getRightWord().getLemma())
-                        || POS_PRONOUN.contains(event.getMiddleWord().getPos())) {
+                        || POS_PRP.contains(event.getMiddleWord().getPos())) {
                     // 主语与宾语相同，或者其中一个为be动词，或谓词为代词，直接过滤
                     event = null;
                 } else {
-                    if (POS_PRONOUN.contains(event.getLeftWord().getPos())) {
+                    if (POS_PRP.contains(event.getLeftWord().getPos())) {
                         // 主语为代词，降级为二元事件
                         event.setLeftWord(null);
                     }
-                    if (POS_PRONOUN.contains(event.getRightWord().getPos())) {
+                    if (POS_PRP.contains(event.getRightWord().getPos())) {
                         // 宾语为代词，降级为二元事件
                         event.setRightWord(null);
                     }
@@ -269,8 +269,8 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                         || "be".equalsIgnoreCase(event.getMiddleWord().getLemma())) {
                     // 主语或谓语包含be动词，直接过滤
                     event = null;
-                } else if (POS_PRONOUN.contains(event.getLeftWord().getPos())
-                        || POS_PRONOUN.contains(event.getMiddleWord().getPos())) {
+                } else if (POS_PRP.contains(event.getLeftWord().getPos())
+                        || POS_PRP.contains(event.getMiddleWord().getPos())) {
                     // 主语或谓语包含代词，直接过滤
                     event = null;
                 }
@@ -281,8 +281,8 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
                         || "be".equalsIgnoreCase(event.getMiddleWord().getLemma())) {
                     // 谓语或宾语包含be动词，直接过滤
                     event = null;
-                } else if (POS_PRONOUN.contains(event.getRightWord().getPos())
-                        || POS_PRONOUN.contains(event.getMiddleWord().getPos())) {
+                } else if (POS_PRP.contains(event.getRightWord().getPos())
+                        || POS_PRP.contains(event.getMiddleWord().getPos())) {
                     // 谓语或宾语包含代词，直接过滤
                     event = null;
                 }
@@ -337,7 +337,7 @@ public class EventsExtractBasedOnGraph implements SystemConstant, Callable<Boole
      */
     private Word personPronoun2Name(List<Word> words, Word word) {
         Word pronoun = word;
-        if (word != null && POS_PERSON_PRONOUN.contains(word.getPos())) {
+        if (word != null && POS_PRP.contains(word.getPos())) {
             for (int i = word.getNumInLine() - 1; i > 0; --i) {
                 final Word curr = words.get(i);
                 if ("person".equalsIgnoreCase(curr.getNer())) {

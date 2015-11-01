@@ -519,7 +519,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                         // 缓存prep关系
                         if("prep".equals(edges[i][j]) || "prepc".equals(edges[i][j])){
                             prepWord = wordsInSentence.get(j);
-                            if(!POS_PRONOUN.contains(prepWord.getPos()) && "O".equals(prepWord.getNer()))
+                            if(!POS_NOUN.contains(prepWord.getPos()) && "O".equals(prepWord.getNer()))
                                 // 如果不是名词或命名实体，则过滤掉
                                 prepWord = null;
                         }
@@ -771,17 +771,42 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
         for(int k = 0; k < eventWithPhrases.size(); k++) {
             EventWithPhrase eventWithPhrase = eventWithPhrases.get(k);
 
+            // 谓语中第一个单词的序号
+            int firstVerbIndex = eventWithPhrase.getMiddlePhrases().get(0).getNumInLine();
+            // 谓语中第二个单词的序号
+            int secondVerbIndex = firstVerbIndex;
+            if(eventWithPhrase.getMiddlePhrases().size() == 2) {
+                // 考虑谓语中存在neg的情形
+                secondVerbIndex = eventWithPhrase.getMiddlePhrases().get(1).getNumInLine();
+            }
+
             if(CollectionUtils.isNotEmpty(eventWithPhrase.getLeftPhrases())) {
                 // 存在主语
                 if(eventWithPhrase.getLeftPhrases().size() == 1) {
                     // 主语是词语
                     Word leftWord = eventWithPhrase.getLeftPhrases().get(0);
-                    int indexOfVerb = eventWithPhrase.getMiddlePhrases().get(0).getNumInLine();
+
                     if("DT".equals(leftWord.getPos())) {
-                        for(int n = leftWord.getNumInLine() + 1; n < indexOfVerb; n++) {
+                        for(int n = leftWord.getNumInLine() + 1; n < firstVerbIndex; n++) {
                             Word word = words.get(n);
-                            if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
-                                leftWord = word;
+                            if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                // 利用名词或命名实体来替换限定词
+                                eventWithPhrase.getLeftPhrases().set(0, word);
+                                break;
+                            }
+                            if(word.getName().equals(word.getPos())) {
+                                // 标点的pos等于其本身
+                                break;
+                            }
+                        }
+                    } else if("WDT".equals(leftWord.getPos())) {
+                        // WDT关系
+                        for(int n = leftWord.getNumInLine() - 1; n > 0; n--) {
+                            Word word = words.get(n);
+                            if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                // 利用名词或命名实体来替换限定词
+                                eventWithPhrase.getLeftPhrases().set(0, word);
+                                break;
                             }
                             if(word.getName().equals(word.getPos())) {
                                 // 标点的pos等于其本身
@@ -796,7 +821,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 /*Word middleWord = eventWithPhrase.getMiddlePhrases().get(0);
                 for(int n = middleWord.getNumInLine() - 1; n > 0; n--) {
                     Word word = words.get(n);
-                    if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                    if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
                         eventWithPhrase.getLeftPhrases().add(word);
                     }
                 }*/
@@ -807,11 +832,27 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 if(eventWithPhrase.getRightPhrases().size() == 1) {
                     // 宾语为单词
                     Word rightWord = eventWithPhrase.getRightPhrases().get(0);
+                    //int indexOfVerb = eventWithPhrase.get
                     if("DT".equals(rightWord.getPos())) {
                         for(int n = rightWord.getNumInLine() + 1; n < words.size(); n++) {
                             Word word = words.get(n);
-                            if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
-                                rightWord = word;
+                            if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                // 利用名词或命名实体来替换限定词
+                                eventWithPhrase.getRightPhrases().set(0, word);
+                                break;
+                            }
+                            if(word.getName().equals(word.getPos())) {
+                                // 当前为标点，标点的pos等于本身
+                                break;
+                            }
+                        }
+                    } else if("WDT".equals(rightWord.getPos())) {
+                        for(int n = rightWord.getNumInLine() - 1; n > secondVerbIndex; n--) {
+                            Word word = words.get(n);
+                            if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                // 利用名词或命名实体来替换限定词
+                                eventWithPhrase.getRightPhrases().set(0, word);
+                                break;
                             }
                             if(word.getName().equals(word.getPos())) {
                                 // 当前为标点，标点的pos等于本身
@@ -832,7 +873,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 }
                 for(int n = middleWord.getNumInLine() + 1; n < words.size(); n++) {
                     Word word = words.get(n);
-                    if(POS_PRONOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                    if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
                         eventWithPhrase.getRightPhrases().add(word);
                     }
                 }*/
@@ -916,14 +957,14 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 if(event.getLeftWord().getName().equalsIgnoreCase(event.getRightWord().getName())
                         || "be".equalsIgnoreCase(event.getLeftWord().getLemma())
                         || "be".equalsIgnoreCase(event.getRightWord().getLemma())
-                        || POS_PRONOUN.contains(event.getMiddleWord().getPos()))
+                        || POS_PRP.contains(event.getMiddleWord().getPos()))
                     //主语与宾语相同，或者其中一个为be动词，或谓词为代词，直接过滤
                     event = null;
                 else {
-                    if(POS_PRONOUN.contains(event.getLeftWord().getPos()))
+                    if(POS_PRP.contains(event.getLeftWord().getPos()))
                         //主语为代词，降级为二元事件
                         event.setLeftWord(null);
-                    if(POS_PRONOUN.contains(event.getRightWord().getPos()))
+                    if(POS_PRP.contains(event.getRightWord().getPos()))
                         //宾语为代词，降级为二元事件
                         event.setRightWord(null);
                 }
@@ -933,8 +974,8 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                         || "be".equalsIgnoreCase(event.getMiddleWord().getLemma()))
                     //主语或谓语包含be动词，直接过滤
                     event = null;
-                else if(POS_PRONOUN.contains(event.getLeftWord().getPos())
-                        || POS_PRONOUN.contains(event.getMiddleWord().getPos()))
+                else if(POS_PRP.contains(event.getLeftWord().getPos())
+                        || POS_PRP.contains(event.getMiddleWord().getPos()))
                     //主语或谓语包含代词，直接过滤
                     event = null;
             if(event != null && event.eventType() == 1)
@@ -943,8 +984,8 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                         || "be".equalsIgnoreCase(event.getMiddleWord().getLemma()))
                     //谓语或宾语包含be动词，直接过滤
                     event = null;
-                else if(POS_PRONOUN.contains(event.getRightWord().getPos())
-                        || POS_PRONOUN.contains(event.getMiddleWord().getPos()))
+                else if(POS_PRP.contains(event.getRightWord().getPos())
+                        || POS_PRP.contains(event.getMiddleWord().getPos()))
                     //谓语或宾语包含代词，直接过滤
                     event = null;
             if(event != null && event.eventType() == -1)
@@ -1010,7 +1051,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
      */
     private Word personPronoun2Name(List<Word> words, Word word){
         Word pronoun = word;
-        if(word != null && POS_PERSON_PRONOUN.contains(word.getPos()))
+        if(word != null && POS_PRP.contains(word.getPos()))
             for(int i = word.getNumInLine() - 1; i > 0; --i){
                 final Word curr = words.get(i);
                 if("person".equalsIgnoreCase(curr.getNer())){
