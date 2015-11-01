@@ -37,6 +37,7 @@ import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation;
 import edu.stanford.nlp.trees.TypedDependency;
 import edu.stanford.nlp.util.CoreMap;
+import edu.whu.cs.nlp.mts.domain.ChunkPhrase;
 import edu.whu.cs.nlp.mts.domain.CoreferenceElement;
 import edu.whu.cs.nlp.mts.domain.Event;
 import edu.whu.cs.nlp.mts.domain.EventType;
@@ -626,60 +627,65 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
     private List<EventWithPhrase> phraseExpansion(List<EventWithPhrase> events, List<Word> words) throws Exception {
         List<EventWithPhrase> eventsInSentence = new ArrayList<EventWithPhrase>();
         try {
-            int wordsCount = words.size();
-            String[] toks = new String[wordsCount - 1];
-            String[] tags = new String[wordsCount - 1];
-            for(int i = 1; i < words.size(); i++) {
-                toks[i - 1] = words.get(i).getName();
-                tags[i - 1] = words.get(i).getPos();
-            }
-            // 采用open nlp进行chunk
-            ChunkerModel chunkerModel = ModelLoader.getChunkerModel();
-            ChunkerME chunkerME = new ChunkerME(chunkerModel);
-            Span[] spans = chunkerME.chunkAsSpans(toks, tags);
 
-            for (EventWithPhrase event : events) {
-                List<Word> leftPhrase = event.getLeftPhrases();
-                List<Word> rightPhrase = event.getRightPhrases();
+            /* 利用open nlp进行chunk */
+            List<ChunkPhrase> phrases = this.chunk(words);
+
+            for (EventWithPhrase eventWithPhrase : events) {
+                // 谓语中第一个单词的序号
+                int firstVerbIndex = eventWithPhrase.getMiddlePhrases().get(0).getNumInLine();
+                // 谓语中第二个单词的序号
+                int secondVerbIndex = firstVerbIndex;
+                if(eventWithPhrase.getMiddlePhrases().size() == 2) {
+                    // 考虑谓语中存在neg的情形
+                    secondVerbIndex = eventWithPhrase.getMiddlePhrases().get(1).getNumInLine();
+                }
+
+                List<Word> leftPhrase = eventWithPhrase.getLeftPhrases();
+                List<Word> rightPhrase = eventWithPhrase.getRightPhrases();
 
                 if(leftPhrase.size() == 1 || rightPhrase.size() == 1) {
                     /**
-                     * 只处理单词数为1的主语和宾语
+                     * 只处理主语或宾语为单词的情形
                      */
                     if(leftPhrase.size() == 1) {
+                        // 主语扩充
                         Word leftWord = leftPhrase.get(0);
-                        for (Span span : spans) {
-                            if(span.getStart() <= leftWord.getNumInLine()
-                                    && leftWord.getNumInLine() <= span.getEnd()
-                                    && (span.getEnd() - span.getStart()) > 1) {
-                                leftPhrase.clear();
-                                for (int i = span.getStart(); i < span.getEnd(); i++) {
-                                    leftPhrase.add(words.get(i + 1));
+                        for (ChunkPhrase phrase : phrases) {
+                            if(leftWord.getNumInLine() >= phrase.getLeftIndex()
+                                    && leftWord.getNumInLine() <= phrase.getRightIndex()
+                                    && (phrase.getRightIndex() - phrase.getLeftIndex()) > 0) {
+                                if(firstVerbIndex > phrase.getLeftIndex()) {
+                                    leftPhrase = new ArrayList<Word>(words.subList(phrase.getLeftIndex(), Math.min(firstVerbIndex, phrase.getRightIndex() + 1)));
+                                } else {
+                                    leftPhrase = new ArrayList<Word>(words.subList(phrase.getLeftIndex(), phrase.getRightIndex() + 1));
                                 }
                                 break;
                             }
                         }
                     }
                     if(rightPhrase.size() == 1) {
+                        // 宾语扩充
                         Word rightWord = rightPhrase.get(0);
-                        for (Span span : spans) {
-                            if(span.getStart() <= rightWord.getNumInLine()
-                                    && rightWord.getNumInLine() <= span.getEnd()
-                                    && (span.getEnd() - span.getStart()) > 1) {
-                                rightPhrase.clear();
-                                for (int i = span.getStart(); i < span.getEnd(); i++) {
-                                    rightPhrase.add(words.get(i + 1));
+                        for (ChunkPhrase phrase : phrases) {
+                            if(rightWord.getNumInLine() >= phrase.getLeftIndex()
+                                    && rightWord.getNumInLine() <= phrase.getRightIndex()
+                                    && (phrase.getRightIndex() - phrase.getLeftIndex()) > 0) {
+                                if(phrase.getRightIndex() > secondVerbIndex) {
+                                    rightPhrase = new ArrayList<Word>(words.subList(Math.max(secondVerbIndex + 1, phrase.getLeftIndex()), phrase.getRightIndex() + 1));
+                                } else {
+                                    rightPhrase = new ArrayList<Word>(words.subList(phrase.getLeftIndex(), phrase.getRightIndex() + 1));
                                 }
                                 break;
                             }
                         }
                     }
 
-                    eventsInSentence.add(new EventWithPhrase(leftPhrase, event.getRightPhrases(), rightPhrase, event.getFilename()));
+                    eventsInSentence.add(new EventWithPhrase(leftPhrase, eventWithPhrase.getMiddlePhrases(), rightPhrase, eventWithPhrase.getFilename()));
 
                 } else {
 
-                    eventsInSentence.add(event);
+                    eventsInSentence.add(eventWithPhrase);
 
                 }
 
@@ -690,6 +696,42 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
             throw new Exception(e);
         }
         return eventsInSentence;
+    }
+
+    /**
+     * 利用open nlp进行chunk，并添加一些修正规则
+     *
+     * @param words
+     * @return
+     * @throws IOException
+     */
+    private List<ChunkPhrase> chunk(List<Word> words) throws IOException {
+        List<ChunkPhrase> phrases = new ArrayList<ChunkPhrase>();
+        int wordsCount = words.size();
+        String[] toks = new String[wordsCount - 1]; // 忽略第一个单词Root
+        String[] tags = new String[wordsCount - 1];
+        for(int i = 1; i < words.size(); i++) {
+            toks[i - 1] = words.get(i).getName();
+            tags[i - 1] = words.get(i).getPos();
+        }
+        // 采用open nlp进行chunk
+        ChunkerModel chunkerModel = ModelLoader.getChunkerModel();
+        ChunkerME chunkerME = new ChunkerME(chunkerModel);
+        Span[] spans = chunkerME.chunkAsSpans(toks, tags);
+        for (Span span : spans) {
+            Word word = words.get(span.getStart() + 1);
+            if("'s".equals(word.getName())) {
+                ChunkPhrase prePhrase = phrases.get(phrases.size() - 1);
+                // FIXME 有点问题2015-11-1 18:06:02
+                prePhrase.setRightIndex(span.getEnd());
+                prePhrase.getWords().addAll(words.subList(span.getStart() + 1, span.getEnd() + 1));
+                phrases.set(phrases.size() - 1, prePhrase);
+            } else {
+                ChunkPhrase chunkPhrase = new ChunkPhrase(span.getStart() + 1, span.getEnd(), words.subList(span.getStart() + 1, span.getEnd() + 1));
+                phrases.add(chunkPhrase);
+            }
+        }
+        return phrases;
     }
 
     /**
