@@ -817,14 +817,13 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 }
             } else {
                 // 主语缺失，向前找标点范围内的最近的名词或命名实体
-                // FIXME 临时屏蔽 2015-10-31 21:47:31
-                /*Word middleWord = eventWithPhrase.getMiddlePhrases().get(0);
-                for(int n = middleWord.getNumInLine() - 1; n > 0; n--) {
+                for(int n = firstVerbIndex - 1; n > 0; n--) {
                     Word word = words.get(n);
                     if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
                         eventWithPhrase.getLeftPhrases().add(word);
+                        break;
                     }
-                }*/
+                }
             }
 
             if(CollectionUtils.isNotEmpty(eventWithPhrase.getRightPhrases())) {
@@ -832,7 +831,6 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 if(eventWithPhrase.getRightPhrases().size() == 1) {
                     // 宾语为单词
                     Word rightWord = eventWithPhrase.getRightPhrases().get(0);
-                    //int indexOfVerb = eventWithPhrase.get
                     if("DT".equals(rightWord.getPos())) {
                         for(int n = rightWord.getNumInLine() + 1; n < words.size(); n++) {
                             Word word = words.get(n);
@@ -863,20 +861,13 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 }
             } else {
                 // 宾语缺失，向后找标点范围内最近的名词或命名实体
-                // FIXME 临时屏蔽 2015-10-31 21:48:05
-                /*List<Word> middlePhrase = eventWithPhrase.getMiddlePhrases();
-                Word middleWord = null;
-                if(middlePhrase.size() == 2) {
-                    middleWord = middlePhrase.get(1);
-                } else {
-                    middleWord = middlePhrase.get(0);
-                }
-                for(int n = middleWord.getNumInLine() + 1; n < words.size(); n++) {
+                for(int n = secondVerbIndex + 1; n < words.size(); n++) {
                     Word word = words.get(n);
                     if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
                         eventWithPhrase.getRightPhrases().add(word);
+                        break;
                     }
-                }*/
+                }
             }
 
         }
