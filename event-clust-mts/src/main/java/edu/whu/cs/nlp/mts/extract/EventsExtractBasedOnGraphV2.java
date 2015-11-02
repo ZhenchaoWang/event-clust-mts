@@ -798,7 +798,10 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
          * 2.如果一个事件的主语或者宾语是限定词，<br>
          *   则将该词替换成向后距离最近（不超过标点范围）的名词或命名实体
          *
-         * 3.如果一个事件缺失主语或者宾语，<br>
+         * 3.如果一个事件的主语或者宾语是WP或者WP$,<br>
+         *  则往前寻找最近的人名
+         *
+         * 4.如果一个事件缺失主语或者宾语，<br>
          *   则向前向后找最近（不超过标点范围）的名词或命名实体进行补全
          *
          */
@@ -847,6 +850,15 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                                 break;
                             }
                         }
+                    } else if("WP".equals(leftWord.getPos()) || "WP$".equals(leftWord.getPos())) {
+                        // 往前寻找最近的人名来替换当前词
+                        for(int n = leftWord.getNumInLine() - 1; n > 0; n--) {
+                            Word word = words.get(n);
+                            if("person".equalsIgnoreCase(word.getNer())) {
+                                eventWithPhrase.getLeftPhrases().set(0, word);
+                                break;
+                            }
+                        }
                     }
                 }
             } else {
@@ -888,6 +900,15 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                             }
                             if(word.getName().equals(word.getPos())) {
                                 // 当前为标点，标点的pos等于本身
+                                break;
+                            }
+                        }
+                    } else if("WP".equals(rightWord.getPos()) || "WP$".equals(rightWord.getPos())) {
+                        // 往前寻找最近的人名来替换当前词
+                        for(int n = rightWord.getNumInLine() - 1; n > secondVerbIndex; n--) {
+                            Word word = words.get(n);
+                            if("person".equalsIgnoreCase(word.getNer())) {
+                                eventWithPhrase.getRightPhrases().set(0, word);
                                 break;
                             }
                         }
