@@ -60,6 +60,12 @@ public interface SystemConstant {
     /** 目录名：短语扩充（简版） */
     public static final String      DIR_CR_RP_PE_EVENTSSIMPLIFY     = "events_cr_rp_pe-simplify";
 
+    /** 目录名：事件过滤 */
+    public static final String      DIR_CR_RP_PE_EF_EVENTS          = "events_cr_rp_pe_ef";
+
+    /** 目录名：事件过滤（简版） */
+    public static final String      DIR_CR_RP_PE_EF_EVENTSSIMPLIFY   = "events_cr_rp_pe_ef-simplify";
+
     /** 目录名：node文件 */
     public final static String      DIR_NODES                       = "nodes";
 
@@ -115,6 +121,8 @@ public interface SystemConstant {
         {
             add("PRP");
             add("PRP$");
+            add("WP");
+            add("WP$");
         }
     };
 

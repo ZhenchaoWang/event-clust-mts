@@ -57,6 +57,25 @@ public class EventWithPhrase extends Event {
         return EventType.ERROR;
     }
 
+    /**
+     * 判断当前事件是不是回文事件，即主语和宾语相同
+     *
+     * @return
+     */
+    public boolean isPalindromicEvent() {
+        boolean isPalindromic = false;
+        if(this.leftPhrases.size() == this.rightPhrases.size()) {
+            isPalindromic = true;
+            for(int i = 0; i < this.leftPhrases.size(); i++) {
+                if(!this.leftPhrases.get(i).equals(this.rightPhrases.get(i))) {
+                    isPalindromic = false;
+                    break;
+                }
+            }
+        }
+        return isPalindromic;
+    }
+
     public String getFilename() {
         return this.filename;
     }

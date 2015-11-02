@@ -17,7 +17,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.regex.Pattern;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -295,11 +294,40 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
 
                 }
 
-                // TODO 对事件进行过滤操作 2015-10-27 21:49:27
+                /**
+                 * 对事件进行过滤
+                 */
+                Map<Integer, List<EventWithPhrase>> eventsAfterCRAndRPAndPEAndEF = new TreeMap<Integer, List<EventWithPhrase>>();
+                try {
+                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCRAndRPAndPE.entrySet()) {
+                        List<EventWithPhrase> eventsInSentence = new ArrayList<EventWithPhrase>();
+                        for (EventWithPhrase event : entry.getValue()) {
+                            EventWithPhrase filtEvent = this.eventFilter(event);
+                            if(null != filtEvent) {
+                                eventsInSentence.add(filtEvent);
+                            }
+                        }
+                        eventsAfterCRAndRPAndPEAndEF.put(entry.getKey(), eventsInSentence);
+                    }
 
-            } catch (IOException e) {
+                    /*中间结果记录：保存经过事件过滤之后的事件*/
+                    StringBuilder sb_events_phrase = new StringBuilder();
+                    StringBuilder sb_simplify_events_phrase = new StringBuilder();
+                    for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCRAndRPAndPEAndEF.entrySet()) {
+                        sb_events_phrase.append(entry.getKey() + "\t" + CommonUtil.list2String(entry.getValue()) + LINE_SPLITER);
+                        sb_simplify_events_phrase.append(entry.getKey() + "\t" + this.getSimpilyEvents(entry.getValue()) + LINE_SPLITER);
+                    }
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_EF_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
+                    FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_EF_EVENTSSIMPLIFY, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
 
-                this.log.error("文件读或写失败：" + file.getAbsolutePath(), e);
+                } catch(Throwable e) {
+                    this.log.error("events filt error!", e);
+                    throw e;
+                }
+
+            } catch (Throwable e) {
+
+                this.log.error("events extract error：" + file.getAbsolutePath(), e);
 
             }
         }
@@ -850,7 +878,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                                 break;
                             }
                         }
-                    } else if("WP".equals(leftWord.getPos()) || "WP$".equals(leftWord.getPos())) {
+                    } else if(POS_PRP.contains(leftWord.getPos())) {
                         // 往前寻找最近的人名来替换当前词
                         for(int n = leftWord.getNumInLine() - 1; n > 0; n--) {
                             Word word = words.get(n);
@@ -903,7 +931,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                                 break;
                             }
                         }
-                    } else if("WP".equals(rightWord.getPos()) || "WP$".equals(rightWord.getPos())) {
+                    } else if(POS_PRP.contains(rightWord.getPos())) {
                         // 往前寻找最近的人名来替换当前词
                         for(int n = rightWord.getNumInLine() - 1; n > secondVerbIndex; n--) {
                             Word word = words.get(n);
@@ -932,132 +960,27 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
 
     /**
      * 事件过滤函数，对于不符合要求的事件，返回null
-     * @param event_in
+     * @param event
      * @return
      */
-    private EventWithWord eventFilter(EventWithWord event_in){
-        EventWithWord event = null;
-        if(event_in != null){
-            /*
-             * 对事件进行过滤，过滤规则：
-             * 对于三元组事件：
-             * 1.如果谓词不是英文单词，则返回null
-             * 2.对于三元组事件，如果主语或者宾语有一个不为单词，则将其替换为二元组事件，如果满足二元组事件要求，就将得到的二元组事件返回，否则返回null
-             * 对于二元组事件：
-             * 1.如果谓词不是单词，则返回null
-             * 2.如果主语或者宾语不是单词，则返回null
-             */
-            final Pattern pattern_include = Pattern.compile("[a-zA-Z0-9$]+");  //必须包含的项
-            final Pattern pattern_exclude = Pattern.compile("[&']");  //不能包含的字符
-            if(event_in.getMiddleWord() == null
-                    || !pattern_include.matcher(event_in.getMiddleWord().getLemma()).find()
-                    || pattern_exclude.matcher(event_in.getMiddleWord().getLemma()).find())
-                //谓语不是单词
-                event = null;
-            else if(event_in.getLeftWord() != null
-                    && event_in.getRightWord() != null){
-                //当前为三元组事件
-                if(pattern_include.matcher(event_in.getLeftWord().getLemma()).find()
-                        && pattern_include.matcher(event_in.getRightWord().getLemma()).find()
-                        && !pattern_exclude.matcher(event_in.getLeftWord().getLemma()).find()
-                        && !pattern_exclude.matcher(event_in.getRightWord().getLemma()).find())
-                    event = event_in;
-                else if(pattern_include.matcher(event_in.getLeftWord().getLemma()).find()
-                        && !pattern_exclude.matcher(event_in.getLeftWord().getLemma()).find())
-                    //将当前三元事件降级为二元事件
-                    event = new EventWithWord(event_in.getLeftWord(), event_in.getMiddleWord(), null, event_in.getFilename());
-                else if(pattern_include.matcher(event_in.getRightWord().getLemma()).find()
-                        && !pattern_exclude.matcher(event_in.getRightWord().getLemma()).find())
-                    event = new EventWithWord(null, event_in.getMiddleWord(), event_in.getRightWord(), event_in.getFilename());
-                else
-                    event = null;
-            } else //当前为二元组事件
-                if(event_in.getLeftWord() != null
-                && pattern_include.matcher(event_in.getLeftWord().getLemma()).find()
-                && !pattern_exclude.matcher(event_in.getLeftWord().getLemma()).find())
-                    event = event_in;
-                else if(event_in.getRightWord() != null
-                        && pattern_include.matcher(event_in.getRightWord().getLemma()).find()
-                        && !pattern_exclude.matcher(event_in.getRightWord().getLemma()).find())
-                    event = event_in;
-                else
-                    event = null;
+    private EventWithPhrase eventFilter(EventWithPhrase event){
+        EventWithPhrase result = event;
+
+        if(event == null) {
+            return null;
         }
 
-        /*
-         * 2015年6月7日19:43:22新添加过滤规则
-         * 三元事件
-         * 1.如果主语、宾语中包含代词，则去除代词，降级为二元事件
-         * 2.如果谓词为代词，则直接过滤
-         * 3.如果主语和宾语相同，则直接过滤
-         * 4.如果主语或宾语为be动词，则直接过滤
-         * 二元事件
-         * 1.如果包含be动词，直接过滤
-         * 2.如果包含代词，则直接过滤
-         * 通用规则
-         * 1.将$全部改为money
-         */
-        if(event != null){
-            if(event.eventType() == 3)
-                //表示当前为三元事件
-                if(event.getLeftWord().getName().equalsIgnoreCase(event.getRightWord().getName())
-                        || "be".equalsIgnoreCase(event.getLeftWord().getLemma())
-                        || "be".equalsIgnoreCase(event.getRightWord().getLemma())
-                        || POS_PRP.contains(event.getMiddleWord().getPos()))
-                    //主语与宾语相同，或者其中一个为be动词，或谓词为代词，直接过滤
-                    event = null;
-                else {
-                    if(POS_PRP.contains(event.getLeftWord().getPos()))
-                        //主语为代词，降级为二元事件
-                        event.setLeftWord(null);
-                    if(POS_PRP.contains(event.getRightWord().getPos()))
-                        //宾语为代词，降级为二元事件
-                        event.setRightWord(null);
-                }
-            if(event != null && event.eventType() == 2)
-                //表示当前为主谓事件
-                if("be".equalsIgnoreCase(event.getLeftWord().getLemma())
-                        || "be".equalsIgnoreCase(event.getMiddleWord().getLemma()))
-                    //主语或谓语包含be动词，直接过滤
-                    event = null;
-                else if(POS_PRP.contains(event.getLeftWord().getPos())
-                        || POS_PRP.contains(event.getMiddleWord().getPos()))
-                    //主语或谓语包含代词，直接过滤
-                    event = null;
-            if(event != null && event.eventType() == 1)
-                //表示当前为谓宾事件
-                if("be".equalsIgnoreCase(event.getRightWord().getLemma())
-                        || "be".equalsIgnoreCase(event.getMiddleWord().getLemma()))
-                    //谓语或宾语包含be动词，直接过滤
-                    event = null;
-                else if(POS_PRP.contains(event.getRightWord().getPos())
-                        || POS_PRP.contains(event.getMiddleWord().getPos()))
-                    //谓语或宾语包含代词，直接过滤
-                    event = null;
-            if(event != null && event.eventType() == -1)
-                //对于经过操作之后不能称为事件的事件进行过滤
-                event = null;
-            if(event != null) {
-                //将美元符号全部替换成单词money
-                if(event.getLeftWord() != null
-                        && "$".equals(event.getLeftWord().getName())) {
-                    event.getLeftWord().setName("money");
-                    event.getLeftWord().setLemma("money");
-                }
-                if(event.getMiddleWord() != null
-                        && "$".equals(event.getMiddleWord().getName())) {
-                    event.getMiddleWord().setName("money");
-                    event.getMiddleWord().setLemma("money");
-                }
-                if(event.getRightWord() != null
-                        && "$".equals(event.getRightWord().getName())) {
-                    event.getRightWord().setName("money");
-                    event.getRightWord().setLemma("money");
-                }
-            }
+        /*过滤谓词为say的事件*/
+        if("say".equalsIgnoreCase(event.getMiddlePhrases().get(0).getLemma())) {
+            return null;
         }
 
-        return event;
+        /*过滤回文事件*/
+        if(event.isPalindromicEvent()) {
+            return null;
+        }
+
+        return result;
     }
 
     /**
@@ -1086,26 +1009,6 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
             tmp.append(word.wordWithPOS() + " ");
         sentenceDetail = tmp.toString().trim();
         return sentenceDetail;
-    }
-
-    /**
-     * 将一个事件中的人称指代，替换成对应的人名
-     * 策略：找当前词所在行前面最近的人名
-     * @param words
-     * @param word
-     * @return
-     */
-    private Word personPronoun2Name(List<Word> words, Word word){
-        Word pronoun = word;
-        if(word != null && POS_PRP.contains(word.getPos()))
-            for(int i = word.getNumInLine() - 1; i > 0; --i){
-                final Word curr = words.get(i);
-                if("person".equalsIgnoreCase(curr.getNer())){
-                    pronoun = curr;
-                    break;
-                }
-            }
-        return pronoun;
     }
 
     /**
