@@ -81,9 +81,10 @@ public interface SystemConstant {
     /** 目录名：多语句压缩 */
     public final static String      DIR_SENTENCES_COMPRESSION       = "sentences-compression";
 
-    /**
-     * 事件中词之间的连接符
-     */
+    /** 目录名：chunk处理得到的短语集合（简版） */
+    public static final String      DIR_CHUNKSIMPILY                = "chunk-simpily";
+
+    /** 事件中词之间的连接符 */
     public final static String      WORD_CONNECTOR_IN_EVENTS        = "#";
 
     /** 事件所在文件名标记符：左 */
@@ -110,6 +111,7 @@ public interface SystemConstant {
      */
     public final static Set<String> POS_PRP                         = new HashSet<String>() {
         private static final long serialVersionUID = 3536875708378397981L;
+
         {
             add("PRP");
             add("PRP$");

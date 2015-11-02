@@ -599,10 +599,30 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
      */
     private List<EventWithPhrase> phraseExpansion(List<EventWithPhrase> events, List<Word> words) throws Exception {
         List<EventWithPhrase> eventsInSentence = new ArrayList<EventWithPhrase>();
+        if(CollectionUtils.isEmpty(events)) {
+            return eventsInSentence;
+        }
         try {
 
             /* 利用open nlp进行chunk */
             List<ChunkPhrase> phrases = this.chunk(words);
+
+            /* chunk 中间结果记录 */
+            StringBuilder sb_chunk = new StringBuilder();
+
+            for (ChunkPhrase chunkPhrase : phrases) {
+
+                StringBuilder sb_phrase = new StringBuilder();
+
+                for( Word word : chunkPhrase.getWords()) {
+                    sb_phrase.append(word.getName() + ",");
+                }
+
+                sb_chunk.append(sb_phrase.substring(0, sb_phrase.length() - 1) + " ");
+
+            }
+
+            FileUtils.writeStringToFile(FileUtils.getFile(this.textDir + "/" + DIR_CHUNKSIMPILY, events.get(0).getFilename()), sb_chunk.toString() + LINE_SPLITER, DEFAULT_CHARSET, true);
 
             for (EventWithPhrase eventWithPhrase : events) {
                 // 谓语中第一个单词的序号
