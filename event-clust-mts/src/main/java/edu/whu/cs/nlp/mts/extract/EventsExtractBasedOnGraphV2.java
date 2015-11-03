@@ -62,7 +62,7 @@ import opennlp.tools.util.Span;
  * @author ZhenchaoWang 2015-10-26 19:38:22
  *
  */
-public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boolean>{
+public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Map<String, Map<Integer, List<EventWithPhrase>>>>{
 
     private final Logger log = Logger.getLogger(this.getClass());
 
@@ -90,19 +90,20 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
      * @param textDir 输入文件目录
      */
     public EventsExtractBasedOnGraphV2(String textDir) {
-        super();
         this.textDir = textDir;
         this.pipeline = ModelLoader.getPipeLine();
     }
 
     @Override
-    public Boolean call() throws Exception {
+    public Map<String, Map<Integer, List<EventWithPhrase>>> call() throws Exception {
 
-        boolean success = true;
+        this.log.info(Thread.currentThread().getId() + "当前主题：" + this.textDir);
+
+        /*一个topic下的事件集合，按照文件进行组织，key为文件名*/
+        Map<String, Map<Integer, List<EventWithPhrase>>> result = new HashMap<String, Map<Integer, List<EventWithPhrase>>>();
 
         // 获取指定文件夹下的所有文件
         Collection<File> files = FileUtils.listFiles(FileUtils.getFile(this.textDir), null, false);
-        //Pretreatment pretreatment = new Pretreatment();  // 预处理器
 
         for (File file : files) {
             //加载文件
@@ -110,14 +111,10 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
             String parentPath = file.getParentFile().getAbsolutePath();  // 文件所属文件夹的路径
 
             this.log.info(Thread.currentThread().getId() + "正在操作文件：" + absolutePath);
+
             try {
                 // 加载正文
                 String text = FileUtils.readFileToString(file, DEFAULT_CHARSET);
-
-                // 对文本进行句子切分和指代消解
-                /*final Map<String, String> preTreatResult = pretreatment.coreferenceResolution(text);
-                FileUtil.write(parentPath + "/" + DIR_TEXT + "/" + file.getName(), preTreatResult.get(Pretreatment.KEY_SEG_TEXT), DEFAULT_CHARSET);
-                text = preTreatResult.get(Pretreatment.KEY_CR_TEXT);*/
 
                 // 利用stanford的nlp核心工具进行处理
                 Map<String, Object> coreNlpResults =  this.coreNlpOperate(text);
@@ -246,7 +243,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 try {
 
                     for (Entry<Integer, List<EventWithPhrase>> entry : eventsAfterCR.entrySet()) {
-                        eventsAfterCRAndRP.put(entry.getKey(), this.eventRepair(entry.getValue(), words.get(entry.getKey() - 1)));
+                        eventsAfterCRAndRP.put(entry.getKey(), this.eventRepair(entry.getValue(), words.get(entry.getKey() - 1), entry.getKey()));
                     }
 
                     /*中间结果记录：保存经过短语扩充之后的事件*/
@@ -319,10 +316,14 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                     }
                     FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_EF_EVENTS, file.getName()), CommonUtil.cutLastLineSpliter(sb_events_phrase.toString()), DEFAULT_CHARSET);
                     FileUtils.writeStringToFile(FileUtils.getFile(parentPath + "/" + DIR_CR_RP_PE_EF_EVENTSSIMPLIFY, file.getName()), CommonUtil.cutLastLineSpliter(sb_simplify_events_phrase.toString()), DEFAULT_CHARSET);
+                    result.put(file.getParentFile().getName() + "/" + file.getName(), eventsAfterCRAndRPAndPEAndEF);
 
                 } catch(Throwable e) {
+
                     this.log.error("events filt error!", e);
+
                     throw e;
+
                 }
 
             } catch (Throwable e) {
@@ -331,7 +332,9 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
 
             }
         }
-        return success;
+
+        return result;
+
     }
 
     /**
@@ -357,7 +360,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
             if(corefElement != null) {
                 CoreferenceElement ref = corefElement.getRef();
                 //System.out.println(key + "\t" + inWord.getName() + "\t" + inWord.getSentenceNum() + "\t" + inWord.getNumInLine() + "\t" + (inWord.getNumInLine() + 1) + "\t->\t" + ref.getElement());
-                List<Word> wordsInSent = words.get(ref.getSentNum() - 1);
+                List<Word> wordsInSent = new ArrayList<Word>(words.get(ref.getSentNum() - 1));
                 for(int i = ref.getStartIndex(); i < ref.getEndIndex(); i++) {
                     phrase.add(wordsInSent.get(i));
                 }
@@ -387,7 +390,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
      * @return 结果信息全部存在一个map集合中返回，通过key来获取
      *
      */
-    public Map<String, Object> coreNlpOperate(final String text) {
+    public synchronized Map<String, Object> coreNlpOperate(final String text) {
 
         Map<String, Object> coreNlpResults = new HashMap<String, Object>();
 
@@ -498,7 +501,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
      * @param filename
      * @return
      */
-    public Map<Integer, List<EventWithWord>> extract(List<List<ParseItem>> parsedList, List<List<Word>> words, String filename){
+    public Map<Integer, List<EventWithWord>> extract(List<List<ParseItem>> parsedList, List<List<Word>> words, final String filename){
 
         Map<Integer, List<EventWithWord>> events = new HashMap<Integer, List<EventWithWord>>();
 
@@ -506,8 +509,8 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
             for (int k = 0; k < parsedList.size(); ++k) {
                 /*当前处理单位：句子*/
 
-                List<ParseItem> parseItems = parsedList.get(k);
-                List<Word> wordsInSentence = words.get(k);
+                List<ParseItem> parseItems = new ArrayList<ParseItem>(parsedList.get(k));
+                List<Word> wordsInSentence = new ArrayList<Word>(words.get(k));
                 int wordsCount = wordsInSentence.size();
                 // 以依存关系为边构建当前句子的依存关系词图
                 String[][] edges = this.buildWordGraph(parseItems, wordsCount);
@@ -759,9 +762,10 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
      *
      * @param eventWithPhrases
      * @param words
+     * @param sentNum
      * @return
      */
-    private List<EventWithPhrase> eventRepair(List<EventWithPhrase> eventWithPhrases, List<Word> words) {
+    private List<EventWithPhrase> eventRepair(List<EventWithPhrase> eventWithPhrases, List<Word> words, int sentNum) {
 
         List<EventWithPhrase> result = eventWithPhrases;
 
@@ -850,44 +854,46 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 if(eventWithPhrase.getLeftPhrases().size() == 1) {
                     // 主语是词语
                     Word leftWord = eventWithPhrase.getLeftPhrases().get(0);
-
-                    if("DT".equals(leftWord.getPos())) {
-                        for(int n = leftWord.getNumInLine() + 1; n < firstVerbIndex; n++) {
-                            Word word = words.get(n);
-                            if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
-                                // 利用名词或命名实体来替换限定词
-                                eventWithPhrase.getLeftPhrases().set(0, word);
-                                break;
+                    if(leftWord.getSentenceNum() == sentNum) {
+                        if("DT".equals(leftWord.getPos())) {
+                            for(int n = leftWord.getNumInLine() + 1; n < firstVerbIndex; n++) {
+                                Word word = words.get(n);
+                                if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                    // 利用名词或命名实体来替换限定词
+                                    eventWithPhrase.getLeftPhrases().set(0, word);
+                                    break;
+                                }
+                                if(word.getName().equals(word.getPos())) {
+                                    // 标点的pos等于其本身
+                                    break;
+                                }
                             }
-                            if(word.getName().equals(word.getPos())) {
-                                // 标点的pos等于其本身
-                                break;
+                        } else if("WDT".equals(leftWord.getPos())) {
+                            // WDT关系
+                            for(int n = leftWord.getNumInLine() - 1; n > 0; n--) {
+                                Word word = words.get(n);
+                                if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                    // 利用名词或命名实体来替换限定词
+                                    eventWithPhrase.getLeftPhrases().set(0, word);
+                                    break;
+                                }
+                                if(word.getName().equals(word.getPos())) {
+                                    // 标点的pos等于其本身
+                                    break;
+                                }
                             }
-                        }
-                    } else if("WDT".equals(leftWord.getPos())) {
-                        // WDT关系
-                        for(int n = leftWord.getNumInLine() - 1; n > 0; n--) {
-                            Word word = words.get(n);
-                            if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
-                                // 利用名词或命名实体来替换限定词
-                                eventWithPhrase.getLeftPhrases().set(0, word);
-                                break;
-                            }
-                            if(word.getName().equals(word.getPos())) {
-                                // 标点的pos等于其本身
-                                break;
-                            }
-                        }
-                    } else if(POS_PRP.contains(leftWord.getPos())) {
-                        // 往前寻找最近的人名来替换当前词
-                        for(int n = leftWord.getNumInLine() - 1; n > 0; n--) {
-                            Word word = words.get(n);
-                            if("person".equalsIgnoreCase(word.getNer())) {
-                                eventWithPhrase.getLeftPhrases().set(0, word);
-                                break;
+                        } else if(POS_PRP.contains(leftWord.getPos())) {
+                            // 往前寻找最近的人名来替换当前词
+                            for(int n = leftWord.getNumInLine() - 1; n > 0; n--) {
+                                Word word = words.get(n);
+                                if("person".equalsIgnoreCase(word.getNer())) {
+                                    eventWithPhrase.getLeftPhrases().set(0, word);
+                                    break;
+                                }
                             }
                         }
                     }
+
                 }
             } else {
                 // 主语缺失，向前找标点范围内的最近的名词或命名实体
@@ -905,42 +911,47 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
                 if(eventWithPhrase.getRightPhrases().size() == 1) {
                     // 宾语为单词
                     Word rightWord = eventWithPhrase.getRightPhrases().get(0);
-                    if("DT".equals(rightWord.getPos())) {
-                        for(int n = rightWord.getNumInLine() + 1; n < words.size(); n++) {
-                            Word word = words.get(n);
-                            if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
-                                // 利用名词或命名实体来替换限定词
-                                eventWithPhrase.getRightPhrases().set(0, word);
-                                break;
+
+                    if(rightWord.getSentenceNum() == sentNum) {
+
+                        if("DT".equals(rightWord.getPos())) {
+                            for(int n = rightWord.getNumInLine() + 1; n < words.size(); n++) {
+                                Word word = words.get(n);
+                                if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                    // 利用名词或命名实体来替换限定词
+                                    eventWithPhrase.getRightPhrases().set(0, word);
+                                    break;
+                                }
+                                if(word.getName().equals(word.getPos())) {
+                                    // 当前为标点，标点的pos等于本身
+                                    break;
+                                }
                             }
-                            if(word.getName().equals(word.getPos())) {
-                                // 当前为标点，标点的pos等于本身
-                                break;
+                        } else if("WDT".equals(rightWord.getPos())) {
+                            for(int n = rightWord.getNumInLine() - 1; n > secondVerbIndex; n--) {
+                                Word word = words.get(n);
+                                if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
+                                    // 利用名词或命名实体来替换限定词
+                                    eventWithPhrase.getRightPhrases().set(0, word);
+                                    break;
+                                }
+                                if(word.getName().equals(word.getPos())) {
+                                    // 当前为标点，标点的pos等于本身
+                                    break;
+                                }
                             }
-                        }
-                    } else if("WDT".equals(rightWord.getPos())) {
-                        for(int n = rightWord.getNumInLine() - 1; n > secondVerbIndex; n--) {
-                            Word word = words.get(n);
-                            if(POS_NOUN.contains(word.getPos()) || !"O".equals(word.getNer())) {
-                                // 利用名词或命名实体来替换限定词
-                                eventWithPhrase.getRightPhrases().set(0, word);
-                                break;
-                            }
-                            if(word.getName().equals(word.getPos())) {
-                                // 当前为标点，标点的pos等于本身
-                                break;
-                            }
-                        }
-                    } else if(POS_PRP.contains(rightWord.getPos())) {
-                        // 往前寻找最近的人名来替换当前词
-                        for(int n = rightWord.getNumInLine() - 1; n > secondVerbIndex; n--) {
-                            Word word = words.get(n);
-                            if("person".equalsIgnoreCase(word.getNer())) {
-                                eventWithPhrase.getRightPhrases().set(0, word);
-                                break;
+                        } else if(POS_PRP.contains(rightWord.getPos())) {
+                            // 往前寻找最近的人名来替换当前词
+                            for(int n = rightWord.getNumInLine() - 1; n > secondVerbIndex; n--) {
+                                Word word = words.get(n);
+                                if("person".equalsIgnoreCase(word.getNer())) {
+                                    eventWithPhrase.getRightPhrases().set(0, word);
+                                    break;
+                                }
                             }
                         }
                     }
+
                 }
             } else {
                 // 宾语缺失，向后找标点范围内最近的名词或命名实体
@@ -1049,9 +1060,9 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Boo
         });
 
         ExecutorService es = Executors.newFixedThreadPool(4);
-        Future<Boolean> future = es.submit(new EventsExtractBasedOnGraphV2("E:/workspace/optimization/singleText"));
+        Future<Map<String, Map<Integer, List<EventWithPhrase>>>> future = es.submit(new EventsExtractBasedOnGraphV2("E:/workspace/optimization/singleText"));
         es.shutdown();
-        if(future.get()) {
+        if(MapUtils.isNotEmpty(future.get())) {
             System.out.println("success!");
         } else {
             System.out.println("failed!");

@@ -1,12 +1,16 @@
 package edu.whu.cs.nlp.mts.domain;
 
+import java.io.Serializable;
+
 /**
  * 原子事件
  *
  * @author Apache_xiaochao
  *
  */
-public class EventWithWord extends Event {
+public class EventWithWord extends Event implements Serializable{
+
+    private static final long serialVersionUID = 5304005154459141241L;
 
     private Word   leftWord;   // 使动词
     private Word   negWord;    // 否定词

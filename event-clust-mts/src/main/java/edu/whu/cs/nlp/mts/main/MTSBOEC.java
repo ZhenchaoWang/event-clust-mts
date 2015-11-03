@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -12,13 +14,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.clust.CalculateSimilarityThread;
 import edu.whu.cs.nlp.mts.clust.ClusterByChineseWhispers;
 import edu.whu.cs.nlp.mts.domain.CWRunParam;
-import edu.whu.cs.nlp.mts.extract.EventsExtractBasedOnGraph;
+import edu.whu.cs.nlp.mts.domain.EventWithPhrase;
+import edu.whu.cs.nlp.mts.extract.EventsExtractBasedOnGraphV2;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
+import edu.whu.cs.nlp.mts.utils.SerializeUtil;
 
 /**
  * 驱动类
@@ -35,56 +41,90 @@ public class MTSBOEC implements SystemConstant{
             return;
         }
 
-        final String propFilePath = args[0];  //配置文件所在路径
+        String propFilePath = args[0];  //配置文件所在路径
 
         /*
          * 加载配置文件
          */
-        final Properties properties = new Properties();
+        Properties properties = new Properties();
         try {
             properties.load(new FileInputStream(propFilePath));
-        } catch (final IOException e) {
+        } catch (IOException e) {
             log.error("load properties failed!", e);
             return;
         }
 
         //获取线程数
-        final int threadNum = Integer.parseInt(properties.getProperty("threadNum", "2"));
-        final String textDir = properties.getProperty("textDir");
-        final String workDir = properties.getProperty("workDir");
+        int threadNum = Integer.parseInt(properties.getProperty("threadNum", "2"));
+        String textDir = properties.getProperty("textDir");
+        String workDir = properties.getProperty("workDir");
 
         /**
          * 执行事件抽取操作
          */
         if("y".equalsIgnoreCase(properties.getProperty("isExtractEvent"))){
-            log.info(">>event extracting: " + textDir);
-            final File dirFile = new File(textDir);
-            final String[] dirs = dirFile.list();
-            final List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>();
-            for (final String dir : dirs) {
-                tasks.add(new EventsExtractBasedOnGraph(textDir + "/" + dir));
+
+            log.info("event extracting: " + textDir);
+
+            File textDirFile = new File(textDir);
+
+            List<Callable<Map<String, Map<Integer, List<EventWithPhrase>>>>> tasks = new ArrayList<Callable<Map<String, Map<Integer, List<EventWithPhrase>>>>>();
+
+            for (File dir : textDirFile.listFiles()) {
+
+                tasks.add(new EventsExtractBasedOnGraphV2(dir.getAbsolutePath()));
+
             }
-            //执行完成之前，主线程阻塞
-            if(tasks != null && tasks.size() > 0){
-                final ExecutorService executorService = Executors.newFixedThreadPool(threadNum);
+
+            if(CollectionUtils.isNotEmpty(tasks)){
+
+                /*执行完成之前，主线程阻塞*/
+
+                ExecutorService executorService = Executors.newFixedThreadPool(threadNum);
                 try {
-                    final List<Future<Boolean>> futures = executorService.invokeAll(tasks);
-                    if(futures != null){
-                        for (final Future<Boolean> future : futures) {
-                            future.get();
+
+                    List<Future<Map<String, Map<Integer, List<EventWithPhrase>>>>> futures = executorService.invokeAll(tasks);
+
+                    for (Future<Map<String, Map<Integer, List<EventWithPhrase>>>> future : futures) {
+
+                        Map<String, Map<Integer, List<EventWithPhrase>>> eventsInTopic = future.get();
+
+                        for (Entry<String, Map<Integer, List<EventWithPhrase>>> eventsInFile : eventsInTopic.entrySet()) {
+
+                            String key = eventsInFile.getKey();
+                            String[] strs = key.split("/");
+                            String topic = strs[0];
+                            String filename = strs[1];
+                            try {
+                                // 将事件抽取结果按照原文件的组织方式进行序列化存储
+                                SerializeUtil.writeObj(eventsInFile.getValue(), FileUtils.getFile(workDir + "/s_events/" + topic, filename));
+
+                            } catch (IOException e) {
+
+                                log.error("Seralize error:" + topic + "/" + filename, e);
+
+                            }
                         }
+
                     }
 
                 } catch (InterruptedException | ExecutionException e) {
+
                     log.error("There is an exception when extract events!", e);
-                    //e.printStackTrace();
+
+                    return;
+
                 } finally{
+
                     executorService.shutdown();
+
                 }
             }
 
         }else{
+
             log.info("Events extracting is not enabled!");
+
         }
 
         /**

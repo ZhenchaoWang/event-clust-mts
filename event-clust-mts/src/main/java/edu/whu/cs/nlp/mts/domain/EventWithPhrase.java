@@ -1,5 +1,6 @@
 package edu.whu.cs.nlp.mts.domain;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -12,7 +13,9 @@ import org.apache.commons.collections.CollectionUtils;
  * @version 2.0
  *
  */
-public class EventWithPhrase extends Event {
+public class EventWithPhrase extends Event implements Serializable{
+
+    private static final long serialVersionUID = -7370833867494031137L;
 
     private final List<Word> leftPhrases;   // 主语
     private final List<Word> middlePhrases; // 谓语
