@@ -64,7 +64,7 @@ public interface SystemConstant {
     public static final String      DIR_CR_RP_PE_EF_EVENTS          = "events_cr_rp_pe_ef";
 
     /** 目录名：事件过滤（简版） */
-    public static final String      DIR_CR_RP_PE_EF_EVENTSSIMPLIFY   = "events_cr_rp_pe_ef-simplify";
+    public static final String      DIR_CR_RP_PE_EF_EVENTSSIMPLIFY  = "events_cr_rp_pe_ef-simplify";
 
     /** 目录名：node文件 */
     public final static String      DIR_NODES                       = "nodes";
@@ -274,5 +274,8 @@ public interface SystemConstant {
             add("xcomp");
         }
     };
+
+    /** 停用词列表 */
+    public static final Set<String> stopwords                       = ResourceLoader.loadStopwords("stopwords-en-default.txt");
 
 }
