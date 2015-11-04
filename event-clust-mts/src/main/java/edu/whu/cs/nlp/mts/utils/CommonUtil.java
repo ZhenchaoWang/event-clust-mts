@@ -139,4 +139,17 @@ public class CommonUtil implements SystemConstant{
         return word;
     }
 
+    /**
+     * 计算两个字符串之间的距离<br>
+     * 如果两个字符串在长度上不相同则距离为无穷大
+     * @param str1
+     * @param str2
+     * @return
+     */
+    public int strDistance(String str1, String str2) {
+        int dis = Integer.MAX_VALUE;
+
+        return dis;
+    }
+
 }

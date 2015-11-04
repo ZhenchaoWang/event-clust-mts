@@ -276,6 +276,16 @@ public interface SystemConstant {
     };
 
     /** 停用词列表 */
-    public static final Set<String> stopwords                       = ResourceLoader.loadStopwords("stopwords-en-default.txt");
+    public static final Set<String> STOPWORDS                       = ResourceLoader
+            .loadStopwords("stopwords-en-default.txt");
+
+    /** 序列化文件后缀 */
+    public static final String      SUFFIX_SERIALIZE_FILE           = ".obj";
+
+    /** 目录名：序列化的文件 */
+    public static final String      DIR_SERIALIZE_EVENTS            = "serializable-events";
+
+    /** 词向量维度 */
+    public static final Integer     DIMENSION                       = 300;
 
 }

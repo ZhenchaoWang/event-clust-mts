@@ -64,7 +64,7 @@ public class MTSBOEC implements SystemConstant{
          */
         if("y".equalsIgnoreCase(properties.getProperty("isExtractEvent"))){
 
-            log.info("event extracting: " + textDir);
+            log.info("Starting event extract: " + textDir);
 
             File textDirFile = new File(textDir);
 
@@ -97,11 +97,11 @@ public class MTSBOEC implements SystemConstant{
                             String filename = strs[1];
                             try {
                                 // 将事件抽取结果按照原文件的组织方式进行序列化存储
-                                SerializeUtil.writeObj(eventsInFile.getValue(), FileUtils.getFile(workDir + "/s_events/" + topic, filename));
+                                SerializeUtil.writeObj(eventsInFile.getValue(), FileUtils.getFile(workDir + "/" + DIR_SERIALIZE_EVENTS + "/" + topic, filename));
 
                             } catch (IOException e) {
 
-                                log.error("Seralize error:" + topic + "/" + filename, e);
+                                log.error("Seralize error:" + topic + "/" + filename + SUFFIX_SERIALIZE_FILE, e);
 
                             }
                         }
@@ -123,40 +123,35 @@ public class MTSBOEC implements SystemConstant{
 
         }else{
 
-            log.info("Events extracting is not enabled!");
+            log.info("Events extract is not enabled!");
 
         }
 
         /**
          * 计算事件之间的相似度
          */
-        final int nThreadSimiarity =
-                Integer.parseInt(properties.getProperty("nThreadSimiarity"));  //计算事件相似度的线程数量
+        int nThreadSimiarity = Integer.parseInt(properties.getProperty("nThreadSimiarity"));  //计算事件相似度的线程数量
         if("y".equalsIgnoreCase(properties.getProperty("isCalculateSimilarity"))){
-            log.info(">> calculating events similarity");
-            final String cacheName = properties.getProperty("cacheName");
-            final int dimension = Integer.parseInt(properties.getProperty("dimension", "300"));
-            final String datasource = properties.getProperty("datasource");
-            final File dirFile = new File(textDir);
-            final String[] dirs = dirFile.list();
-            final List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>();
-            for (final String dir : dirs) {
-                tasks.add(
-                        new CalculateSimilarityThread(
-                                textDir + "/" + dir, workDir, cacheName, dimension, datasource));
+
+            log.info("Starting calculate events similarity...");
+
+            String cacheName = properties.getProperty("cacheName");
+            String datasource = properties.getProperty("datasource");
+            File eventDirFile = new File(workDir + "/" + DIR_SERIALIZE_EVENTS);
+            File[] topicDirFile = eventDirFile.listFiles();
+            List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>();
+            for (File topicDir : topicDirFile) {
+                tasks.add(new CalculateSimilarityThread(topicDir.getAbsolutePath(), cacheName, datasource));
             }
-            if(tasks != null && tasks.size() > 0){
-                final ExecutorService executorService = Executors.newFixedThreadPool(nThreadSimiarity);
+            if(CollectionUtils.isNotEmpty(tasks)) {
+                ExecutorService executorService = Executors.newFixedThreadPool(nThreadSimiarity);
                 try {
-                    final List<Future<Boolean>> futures = executorService.invokeAll(tasks);
-                    if(futures != null){
-                        for (final Future<Boolean> future : futures) {
-                            future.get();
-                        }
+                    List<Future<Boolean>> futures = executorService.invokeAll(tasks);
+                    for (Future<Boolean> future : futures) {
+                        future.get();
                     }
                 } catch (InterruptedException | ExecutionException e) {
                     log.error("There is an exception when calculate events similarity!", e);
-                    //e.printStackTrace();
                 }finally{
                     executorService.shutdown();
                 }
@@ -202,7 +197,6 @@ public class MTSBOEC implements SystemConstant{
                 cluster.clusterSentencesByEvents();
             } catch (IOException | InterruptedException e) {
                 log.error("There is an exception when calculate events clusting!", e);
-                //e.printStackTrace();
             }
 
         }else{

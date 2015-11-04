@@ -4,122 +4,65 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
+import edu.whu.cs.nlp.mts.domain.EventType;
+import edu.whu.cs.nlp.mts.domain.EventWithPhrase;
 import edu.whu.cs.nlp.mts.domain.EventWithWord;
+import edu.whu.cs.nlp.mts.domain.Vector;
+import edu.whu.cs.nlp.mts.domain.Word;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 import edu.whu.cs.nlp.mts.utils.EhCacheUtil;
+import opennlp.tools.util.StringUtil;
 
 /**
  * 向量操作相关类
  * @author Apache_xiaochao
  *
  */
-public class VectorOperation implements SystemConstant{
+public class VectorOperator implements SystemConstant{
 
     private final Logger log = Logger.getLogger(this.getClass());
 
     private final EhCacheUtil ehCacheUtil;
-    private final int dimension;  //向量维度
 
-    public VectorOperation(String cacheName, int dimension, String datasource) {
-        super();
-        this.dimension = dimension;
-        this.ehCacheUtil = new EhCacheUtil(cacheName, dimension, datasource);
+    public VectorOperator(String cacheName, String datasource) {
+
+        this.ehCacheUtil = new EhCacheUtil(cacheName, datasource);
+
     }
 
     /**
-     * 判断事件所属类型
-     * @param event
-     * @return 3：主-谓-宾；2：主-谓；1：谓-宾；0：未知事件
-     */
-    private int eventType(EventWithWord event){
-        int type = 0;
-        if(event.getLeftWord() != null
-                && event.getMiddleWord() != null
-                && event.getRightWord() != null){
-            type = 3;
-        } else if(event.getLeftWord() != null
-                && event.getMiddleWord() != null){
-            type = 2;
-        } else if(event.getMiddleWord() != null
-                && event.getRightWord() != null){
-            type = 1;
-        }
-        return type;
-    }
-
-    /**
-     * 将事件转化成向量
-     * @param event
-     * @param wordVec
-     * @return
-     */
-    @Deprecated
-    public double[] event2Vec(EventWithWord event, Map<String, Float[]> wordVec){
-        double[] eventVec = null;
-        if(event != null && wordVec != null){
-            if(eventType(event) == 3){
-                final Float[] vec_left = wordVec.get(event.getLeftWord().getLemma());
-                final Float[] vec_middle = wordVec.get(event.getMiddleWord().getLemma());
-                final Float[] vec_right = wordVec.get(event.getRightWord().getLemma());
-                if(vec_left != null
-                        && vec_middle != null && vec_right != null){
-                    final double[][] kronecker_left_right = new double[this.dimension][this.dimension];  //存储主语为宾语的克罗内克积
-                    //计算主语和宾语的克罗内卡积
-                    for(int i = 0 ; i < this.dimension; ++i){
-                        for(int j = 0; j < this.dimension; ++j){
-                            kronecker_left_right[i][j] = vec_left[j] * vec_right[i];
-                        }
-                    }
-                    //将得到的克罗内卡积与谓语作矩阵乘法
-                    eventVec = new double[this.dimension];
-                    for(int i = 0; i < this.dimension; ++i){
-                        double product = 0;
-                        for(int j = 0; j < this.dimension; ++j){
-                            product += vec_middle[j] * kronecker_left_right[j][i];
-                        }
-                        eventVec[i] = product;
-                    }
-
-                }else{
-                    //对于词向量模型中不存在的词，暂时不予考虑
-                }
-            } else {
-                //暂时不考虑三元组以外的事件类型
-            }
-        }
-        return eventVec;
-    }
-
-    /**
-     * 根据时间中三个词的已知向量，来计算对应事件的向量
+     * 根据事件中三个词的已知向量，来计算对应事件的向量
+     *
      * @param vecs_left
      * @param vecs_middle
      * @param vecs_right
      * @return
      */
-    public List<Double[]> event2Vecs(
-            List<Float[]> vecs_left, List<Float[]> vecs_middle, List<Float[]> vecs_right){
-        final List<Double[]> eventVecs = new ArrayList<Double[]>();
-        for (final Float[] f_v_left : vecs_left) {
-            for (final Float[] f_v_middle : vecs_middle) {
-                for (final Float[] f_v_right : vecs_right) {
-                    final double[][] kronecker_left_right = new double[this.dimension][this.dimension];  //存储主语为宾语的克罗内克积
+    public List<Double[]> eventToVecs(List<Float[]> vecs_left, List<Float[]> vecs_middle, List<Float[]> vecs_right){
+
+        List<Double[]> eventVecs = new ArrayList<Double[]>();
+
+        for (Float[] f_v_left : vecs_left) {
+            for (Float[] f_v_middle : vecs_middle) {
+                for (Float[] f_v_right : vecs_right) {
+                    double[][] kronecker_left_right = new double[DIMENSION][DIMENSION];  //存储主语为宾语的克罗内克积
                     //计算主语和宾语的克罗内卡积
-                    for(int i = 0 ; i < this.dimension; ++i){
-                        for(int j = 0; j < this.dimension; ++j){
+                    for(int i = 0 ; i < DIMENSION; ++i){
+                        for(int j = 0; j < DIMENSION; ++j){
                             kronecker_left_right[i][j] = f_v_right[i] * f_v_left[j];
                         }
                     }
                     //将得到的克罗内卡积与谓语作矩阵乘法
-                    final Double[] eventVec = new Double[this.dimension];
-                    for(int i = 0; i < this.dimension; ++i){
+                    Double[] eventVec = new Double[DIMENSION];
+                    for(int i = 0; i < DIMENSION; ++i){
                         double product = 0;
-                        for(int j = 0; j < this.dimension; ++j){
+                        for(int j = 0; j < DIMENSION; ++j){
                             product += f_v_middle[j] * kronecker_left_right[j][i];
                         }
                         eventVec[i] = product;
@@ -128,7 +71,45 @@ public class VectorOperation implements SystemConstant{
                 }
             }
         }
+
         return eventVecs;
+
+    }
+
+    /**
+     * 利用组合语义得到事件向量
+     *
+     * @param leftVec
+     * @param middleVec
+     * @param rightVec
+     * @return
+     */
+    public Double[] eventToVec(Float[] leftVec, Float[] middleVec, Float[] rightVec) {
+
+        if(leftVec == null || middleVec == null || rightVec == null) {
+            return null;
+        }
+
+        double[][] kronecker = new double[DIMENSION][DIMENSION];  //存储主语为宾语的克罗内克积
+        //计算主语和宾语的克罗内卡积
+        for(int i = 0 ; i < DIMENSION; ++i){
+            for(int j = 0; j < DIMENSION; ++j){
+                kronecker[i][j] = rightVec[i] * leftVec[j];
+            }
+        }
+
+        //将得到的克罗内卡积与谓语作矩阵乘法
+        Double[] eventVec = new Double[DIMENSION];
+        for(int i = 0; i < DIMENSION; ++i){
+            double product = 0;
+            for(int j = 0; j < DIMENSION; ++j){
+                product += middleVec[j] * kronecker[j][i];
+            }
+            eventVec[i] = product;
+        }
+
+        return eventVec;
+
     }
 
     /**
@@ -137,86 +118,181 @@ public class VectorOperation implements SystemConstant{
      * @return
      * @throws SQLException
      */
-    public List<Double[]> event2Vecs(EventWithWord event) throws SQLException{
+    public List<Double[]> eventToVecs(EventWithWord event) {
+
         List<Double[]> eventVecs = new ArrayList<Double[]>();
+
         if(event != null){
             //创建一个值全为1的词向量
-            final Float[] all_1_vec = new Float[this.dimension];
+            Float[] all_1_vec = new Float[DIMENSION];
             Arrays.fill(all_1_vec, 1f);
 
-            if(eventType(event) == 3){
+            if(EventType.TERNARY.equals(event.eventType())) {
                 //主-谓-宾结构
-                final List<Float[]> vecs_left = this.ehCacheUtil.getVec(event.getLeftWord());
-                final List<Float[]> vecs_middle = this.ehCacheUtil.getVec(event.getMiddleWord());
-                final List<Float[]> vecs_right = this.ehCacheUtil.getVec(event.getRightWord());
-                if(vecs_left.size() > 0 && vecs_middle.size() > 0 && vecs_right.size() > 0){
-                    eventVecs = event2Vecs(vecs_left, vecs_middle, vecs_right);
-                }else{
-                    this.log.warn("当前事件中存在未知的词向量：" + event);
+                List<Float[]> vecs_left = null;
+                List<Float[]> vecs_middle = null;
+                List<Float[]> vecs_right = null;
+                try {
+                    vecs_left = this.ehCacheUtil.getVec(event.getLeftWord());
+                    vecs_middle = this.ehCacheUtil.getVec(event.getMiddleWord());
+                    vecs_right = this.ehCacheUtil.getVec(event.getRightWord());
+                } catch (SQLException e) {
+                    this.log.error("Get word vector error!", e);
                 }
-            } else if(eventType(event) == 2){
+
+                if(CollectionUtils.isNotEmpty(vecs_left)
+                        && CollectionUtils.isNotEmpty(vecs_middle)
+                        && CollectionUtils.isNotEmpty(vecs_right)) {
+
+                    eventVecs = this.eventToVecs(vecs_left, vecs_middle, vecs_right);
+
+                }else{
+
+                    this.log.warn("当前事件中存在未知的词向量：" + event);
+
+                }
+
+            } else if(EventType.RIGHT_MISSING.equals(event.eventType())) {
+
                 //主-谓，将宾语的向量全部用1代替
-                final List<Float[]> vecs_left = this.ehCacheUtil.getVec(event.getLeftWord());
-                final List<Float[]> vecs_middle = this.ehCacheUtil.getVec(event.getMiddleWord());
-                final List<Float[]> vecs_right = new ArrayList<Float[]>();
+                List<Float[]> vecs_left = null;
+                List<Float[]> vecs_middle = null;
+                List<Float[]> vecs_right = new ArrayList<Float[]>();
                 vecs_right.add(all_1_vec);
-                if(vecs_left.size() > 0 && vecs_middle.size() > 0 && vecs_right.size() > 0){
-                    eventVecs = event2Vecs(vecs_left, vecs_middle, vecs_right);
-                }else{
-                    this.log.warn("当前事件中存在未知的词向量：" + event);
+
+                try {
+                    vecs_left = this.ehCacheUtil.getVec(event.getLeftWord());
+                    vecs_middle = this.ehCacheUtil.getVec(event.getMiddleWord());
+                } catch (SQLException e) {
+                    this.log.error("Get word vector error!", e);
                 }
-            } else if(eventType(event) == 1){
+
+                if(CollectionUtils.isNotEmpty(vecs_left)
+                        && CollectionUtils.isNotEmpty(vecs_middle)) {
+
+                    eventVecs = this.eventToVecs(vecs_left, vecs_middle, vecs_right);
+
+                }else{
+
+                    this.log.warn("当前事件中存在未知的词向量：" + event);
+
+                }
+
+            } else if(EventType.LEFT_MISSING.equals(event.eventType())){
+
                 //谓-宾，将主语的向量全部用1代替
-                final List<Float[]> vecs_left = new ArrayList<Float[]>();
+                List<Float[]> vecs_left = new ArrayList<Float[]>();
                 vecs_left.add(all_1_vec);
-                final List<Float[]> vecs_middle = this.ehCacheUtil.getVec(event.getMiddleWord());
-                final List<Float[]> vecs_right = this.ehCacheUtil.getVec(event.getRightWord());
-                if(vecs_left.size() > 0 && vecs_middle.size() > 0 && vecs_right.size() > 0){
-                    eventVecs = event2Vecs(vecs_left, vecs_middle, vecs_right);
-                }else{
-                    this.log.warn("当前事件中存在未知的词向量：" + event);
+                List<Float[]> vecs_middle = null;
+                List<Float[]> vecs_right = null;
+
+                try {
+                    vecs_middle = this.ehCacheUtil.getVec(event.getMiddleWord());
+                    vecs_right = this.ehCacheUtil.getVec(event.getRightWord());
+                } catch (SQLException e) {
+                    this.log.error("Get word vector error!", e);
                 }
+
+                if(CollectionUtils.isNotEmpty(vecs_middle)
+                        && CollectionUtils.isNotEmpty(vecs_right)){
+
+                    eventVecs = this.eventToVecs(vecs_left, vecs_middle, vecs_right);
+
+                }else{
+
+                    this.log.warn("当前事件中存在未知的词向量：" + event);
+
+                }
+
             }else{
+
                 this.log.info("不支持该事件类型：" + event);
+
             }
         }
         return eventVecs;
     }
 
     /**
-     * 计算两个事件之间的近似度
-     * 策略三：
-     * 采用“Experimental Support for a Categorical Compositional Distributional Model of Meaning.pdf”中的方法
-     * 将模型全部载入内存
-     * @param event1
-     * @param event2
+     * 将事件转化成向量
+     *
+     * @param eventWithPhrase
+     * @return
+     * @throws SQLException
+     */
+    public Double[] eventToVec(EventWithPhrase eventWithPhrase) {
+
+        Double[] eventVec = null;
+
+        if(EventType.TERNARY.equals(eventWithPhrase.eventType())) {
+            //主-谓-宾结构
+            Float[] leftVec = this.phraseVector(eventWithPhrase.getLeftPhrases());
+            Float[] middleVec = this.phraseVector(eventWithPhrase.getMiddlePhrases());
+            Float[] rightVec = this.phraseVector(eventWithPhrase.getRightPhrases());
+
+            eventVec = this.eventToVec(leftVec, middleVec, rightVec);
+
+        } else if(EventType.RIGHT_MISSING.equals(eventWithPhrase.eventType())) {
+
+            //主-谓，将宾语的向量全部用1代替
+            Float[] leftVec = this.phraseVector(eventWithPhrase.getLeftPhrases());
+            Float[] middleVec = this.phraseVector(eventWithPhrase.getMiddlePhrases());
+            Float[] rightVec = new Float[SystemConstant.DIMENSION];
+            Arrays.fill(rightVec, 1);
+
+            eventVec = this.eventToVec(leftVec, middleVec, rightVec);
+
+        } else if(EventType.LEFT_MISSING.equals(eventWithPhrase.eventType())){
+
+            //谓-宾，将主语的向量全部用1代替
+            Float[] leftVec = new Float[SystemConstant.DIMENSION];
+            Arrays.fill(leftVec, 1);
+            Float[] middleVec = this.phraseVector(eventWithPhrase.getMiddlePhrases());
+            Float[] rightVec = this.phraseVector(eventWithPhrase.getRightPhrases());
+
+            eventVec = this.eventToVec(leftVec, middleVec, rightVec);
+
+        } else {
+
+            this.log.warn("不支持该事件类型：" + eventWithPhrase);
+
+        }
+
+        return eventVec;
+
+    }
+
+    /**
+     * 计算两个向量之间的余弦值<br>
+     * 如果小于0，则说明计算出错
+     *
+     * @param vec1
+     * @param vec2
      * @return
      */
-    @Deprecated
-    public double eventsApproximationDegree(
-            EventWithWord event1, EventWithWord event2, Map<String, Float[]> wordVec){
-        double approx = 0;  //默认以最大值来表示两个事件之间的最大值
-        if(event1 != null && event2 != null && wordVec != null){
-            //计算得到两个事件的向量
-            final double[] event_vec_1 = event2Vec(event1, wordVec);
-            final double[] event_vec_2 = event2Vec(event2, wordVec);
-            if(event_vec_1 != null & event_vec_2 != null){
-                //利用向量余弦值来计算事件之间的相似度
-                double scalar = 0;  //两个向量的内积
-                double module_1 = 0, module_2 = 0;  //向量vec_1和vec_2的模
-                for(int i = 0; i < this.dimension; ++i){
-                    scalar += event_vec_1[i] * event_vec_2[i];
-                    module_1 += event_vec_1[i] * event_vec_1[i];
-                    module_2 += event_vec_2[i] * event_vec_2[i];
-                }
-                if(module_1 > 0 && module_2 > 0) {
-                    approx = scalar / (Math.sqrt(module_1) * Math.sqrt(module_2));
-                }
-            }else{
-                return Double.MAX_VALUE;
-            }
+    public double cosineValue(Double[] vec1, Double[] vec2) {
+
+        double value = -1;
+
+        if(vec1 == null || vec2 == null) {
+            return value;
         }
-        return approx;
+
+        //利用向量余弦值来计算事件之间的相似度
+        double scalar = 0;  //两个向量的内积
+        double module_1 = 0, module_2 = 0;  //向量vec_1和vec_2的模
+        for(int i = 0; i < DIMENSION; ++i){
+            scalar += vec1[i] * vec2[i];
+            module_1 += vec1[i] * vec1[i];
+            module_2 += vec2[i] * vec2[i];
+        }
+
+        if(module_1 > 0 && module_2 > 0) {
+            value = Math.abs(scalar / (Math.sqrt(module_1) * Math.sqrt(module_2)));
+        }
+
+        return value;
+
     }
 
     /**
@@ -233,8 +309,8 @@ public class VectorOperation implements SystemConstant{
         double approx = 0;  //默认以最大值来表示两个事件之间的最大值
         if(event1 != null && event2 != null){
             //计算得到两个事件的向量
-            final List<Double[]> event_vecs_1 = event2Vecs(event1);
-            final List<Double[]> event_vecs_2 = event2Vecs(event2);
+            final List<Double[]> event_vecs_1 = this.eventToVecs(event1);
+            final List<Double[]> event_vecs_2 = this.eventToVecs(event2);
             if(event_vecs_1.size() > 0 && event_vecs_2.size() > 0){
                 final Random random = new Random(System.currentTimeMillis());
                 final int r_value = random.nextInt(100);
@@ -257,7 +333,7 @@ public class VectorOperation implements SystemConstant{
                     //利用向量余弦值来计算事件之间的相似度
                     double scalar = 0;  //两个向量的内积
                     double module_1 = 0, module_2 = 0;  //向量vec_1和vec_2的模
-                    for(int i = 0; i < this.dimension; ++i){
+                    for(int i = 0; i < DIMENSION; ++i){
                         scalar += event_vec_1[i] * event_vec_2[i];
                         module_1 += event_vec_1[i] * event_vec_1[i];
                         module_2 += event_vec_2[i] * event_vec_2[i];
@@ -274,7 +350,7 @@ public class VectorOperation implements SystemConstant{
                             //利用向量余弦值来计算事件之间的相似度
                             double scalar = 0;  //两个向量的内积
                             double module_1 = 0, module_2 = 0;  //向量vec_1和vec_2的模
-                            for(int i = 0; i < this.dimension; ++i){
+                            for(int i = 0; i < DIMENSION; ++i){
                                 scalar += event_vec_1[i] * event_vec_2[i];
                                 module_1 += event_vec_1[i] * event_vec_1[i];
                                 module_2 += event_vec_2[i] * event_vec_2[i];
@@ -334,7 +410,7 @@ public class VectorOperation implements SystemConstant{
                 //利用向量余弦值来计算事件之间的相似度
                 double scalar = 0;  //两个向量的内积
                 double module_1 = 0, module_2 = 0;  //向量vec_1和vec_2的模
-                for(int i = 0; i < this.dimension; ++i){
+                for(int i = 0; i < DIMENSION; ++i){
                     scalar += event_vec_1[i] * event_vec_2[i];
                     module_1 += event_vec_1[i] * event_vec_1[i];
                     module_2 += event_vec_2[i] * event_vec_2[i];
@@ -351,7 +427,7 @@ public class VectorOperation implements SystemConstant{
                         //利用向量余弦值来计算事件之间的相似度
                         double scalar = 0;  //两个向量的内积
                         double module_1 = 0, module_2 = 0;  //向量vec_1和vec_2的模
-                        for(int i = 0; i < this.dimension; ++i){
+                        for(int i = 0; i < DIMENSION; ++i){
                             scalar += event_vec_1[i] * event_vec_2[i];
                             module_1 += event_vec_1[i] * event_vec_1[i];
                             module_2 += event_vec_2[i] * event_vec_2[i];
@@ -369,6 +445,46 @@ public class VectorOperation implements SystemConstant{
             }
         }
         return approx;
+    }
+
+    /**
+     * 计算一个短语的向量
+     *
+     * @param phrase
+     * @return
+     */
+    private Float[] phraseVector(List<Word> phrase) {
+        Float[] phraseVec = null;
+
+        if(CollectionUtils.isEmpty(phrase)) {
+            return phraseVec;
+        }
+
+        /**
+         * 计算策略:<br>
+         * 对短语中的非停用词的向量进行累加取平均
+         */
+        phraseVec = new Float[DIMENSION];
+        for (Word word : phrase) {
+            if(STOPWORDS.contains(word.getLemma())) {
+                // 跳过停用词
+                continue;
+            }
+            try {
+                List<Vector> vecs = this.ehCacheUtil.getVec(word);
+                if(CollectionUtils.isNotEmpty(vecs)) {
+                    for (Vector vector : vecs) {
+                        String similarWord = vector.getWord();
+                        StringUtils.
+                        //vector.floatVecs();
+                    }
+                }
+            } catch (SQLException e) {
+                this.log.error("", e);
+            }
+        }
+
+        return phraseVec;
     }
 
 }

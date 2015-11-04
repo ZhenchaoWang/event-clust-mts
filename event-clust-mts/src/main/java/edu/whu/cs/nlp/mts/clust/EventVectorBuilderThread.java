@@ -12,7 +12,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.domain.EventWithWord;
-import edu.whu.cs.nlp.mts.domain.EventToId;
+import edu.whu.cs.nlp.mts.domain.EventWithWordToId;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
 import edu.whu.cs.nlp.mts.utils.CommonUtil;
 import edu.whu.cs.nlp.mts.utils.FileUtil;
@@ -28,14 +28,14 @@ public class EventVectorBuilderThread implements Runnable, SystemConstant{
 
     private final String topicDir;
     private final String saveBaseDir;
-    private final VectorOperation vo;
+    private final VectorOperator vo;
 
     public EventVectorBuilderThread(
             String topicDir, String saveBaseDir, String cacheName, int dimension, String datasource) {
         super();
         this.topicDir = topicDir;
         this.saveBaseDir = saveBaseDir;
-        this.vo = new VectorOperation(cacheName, dimension, datasource);
+        this.vo = new VectorOperator(cacheName, dimension, datasource);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class EventVectorBuilderThread implements Runnable, SystemConstant{
         final String topicName = this.topicDir.substring(this.topicDir.lastIndexOf("/"));
         this.log.info(Thread.currentThread().getId() +  " is calculating event vectors, dir:" + this.topicDir);
         int num = 0; // 事件编号
-        final List<EventToId> event_id_list = new ArrayList<EventToId>(); // 存放所有事件及其对应的序号
+        final List<EventWithWordToId> event_id_list = new ArrayList<EventWithWordToId>(); // 存放所有事件及其对应的序号
         final File f_event_files = new File(this.topicDir + "/" + DIR_EVENTS);
         final String[] filenames = f_event_files.list();
         final Map<Integer, List<Double[]>> eventVecsMap = new TreeMap<Integer, List<Double[]>>();  //记录每一个事件对应的向量集合，一个事件可能有多个向量
@@ -59,13 +59,13 @@ public class EventVectorBuilderThread implements Runnable, SystemConstant{
                     //对事件进行编号
                     for (final EventWithWord event : eventsInFile) {
                         //对事件进行编号，然后封装成对象存储
-                        final EventToId event2Id = new EventToId();
+                        final EventWithWordToId event2Id = new EventWithWordToId();
                         event2Id.setEvent(event);
                         event2Id.setNum(num);
                         event_id_list.add(event2Id);
                         //计算当前事件对应的向量集合
                         try {
-                            final List<Double[]> vecs = this.vo.event2Vecs(event);
+                            final List<Double[]> vecs = this.vo.eventToVecs(event);
                             if(vecs != null && vecs.size() > 0){
                                 eventVecsMap.put(num, vecs);
                                 eventMap.put(num, event.toShortString());

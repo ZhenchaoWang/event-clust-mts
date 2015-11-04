@@ -6,13 +6,20 @@ package edu.whu.cs.nlp.mts.domain;
  * @author Apache_xiaochao
  *
  */
-public class EventToId {
+public class EventWithWordToId {
 
     private EventWithWord   event;
+
     private Integer num;
 
-    public EventToId() {
+    public EventWithWordToId() {
         super();
+    }
+
+    public EventWithWordToId(EventWithWord event, Integer num) {
+        super();
+        this.event = event;
+        this.num = num;
     }
 
     public EventWithWord getEvent() {

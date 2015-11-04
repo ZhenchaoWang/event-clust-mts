@@ -22,8 +22,8 @@ import org.apache.log4j.Logger;
 import edu.whu.cs.nlp.mts.clust.ClusterByChineseWhispers;
 import edu.whu.cs.nlp.mts.domain.CWRunParam;
 import edu.whu.cs.nlp.mts.domain.RougeAvg;
+import edu.whu.cs.nlp.mts.sys.C3P0Util;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
-import wzc.util.c3p0.C3P0Util;
 
 /**
  * 参数优化
