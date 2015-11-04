@@ -1,13 +1,11 @@
 package edu.whu.cs.nlp.mts.sys;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
 import org.apache.log4j.Logger;
 
 /**
@@ -30,22 +28,21 @@ public class ResourceLoader {
         Set<String> stopwords = new HashSet<String>();
         for (String filename : filenames) {
             try {
-                LineIterator iterator = null;
+                BufferedReader br = null;
                 try{
-                    log.info("loading stopwords...");
-                    iterator = FileUtils.lineIterator(
-                            new File(ResourceLoader.class.getClassLoader().getResource(filename).toURI()), "UTF-8");
-
-                    while(iterator.hasNext()) {
-                        stopwords.add(iterator.nextLine());
+                    log.info("Loading stopwords...");
+                    br = new BufferedReader(new InputStreamReader(ResourceLoader.class.getClassLoader().getResourceAsStream(filename), "UTF-8"));
+                    String line = null;
+                    while((line = br.readLine()) != null) {
+                        stopwords.add(line.trim());
                     }
                     log.info("load stopwords finished, count:" + stopwords.size());
                 } finally {
-                    if(iterator != null) {
-                        iterator.close();
+                    if(br != null) {
+                        br.close();
                     }
                 }
-            } catch (IOException | URISyntaxException e) {
+            } catch (IOException e) {
                 log.error("load stopwords error!", e);
             }
         }

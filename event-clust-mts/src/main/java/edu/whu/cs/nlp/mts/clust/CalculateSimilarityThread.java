@@ -42,10 +42,11 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
     @Override
     public Boolean call() throws Exception {
 
-        String topicName = this.topicDir.substring(this.topicDir.lastIndexOf("/"));
-        String workDir = this.topicDir.substring(0, this.topicDir.lastIndexOf("/"));
-
         log.info(Thread.currentThread().getId() +  " - calculating event similarity, dir:" + this.topicDir);
+
+        int index = Math.max(this.topicDir.lastIndexOf("/"), this.topicDir.lastIndexOf("\\"));
+        String topicName = this.topicDir.substring(index);
+        String workDir = this.topicDir.substring(0, index);
 
         int num = 0; // 事件编号
 
@@ -58,7 +59,7 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
 
             try {
                 @SuppressWarnings("unchecked")
-                Map<Integer, List<EventWithPhrase>> eventsInFile = (Map<Integer, List<EventWithPhrase>>) SerializeUtil.readObj(eventFile.getName());
+                Map<Integer, List<EventWithPhrase>> eventsInFile = (Map<Integer, List<EventWithPhrase>>) SerializeUtil.readObj(eventFile.getAbsolutePath());
 
                 //对事件进行编号
                 for (Entry<Integer, List<EventWithPhrase>> event : eventsInFile.entrySet()) {

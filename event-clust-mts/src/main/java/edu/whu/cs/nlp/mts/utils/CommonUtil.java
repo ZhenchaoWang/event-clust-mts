@@ -146,8 +146,26 @@ public class CommonUtil implements SystemConstant{
      * @param str2
      * @return
      */
-    public int strDistance(String str1, String str2) {
+    public static int strDistance(String str1, String str2) {
         int dis = Integer.MAX_VALUE;
+        if(str1 == null || str2 == null) {
+            return dis;
+        }
+        if(str1.length() != str2.length()) {
+            return dis;
+        }
+
+        if(str1.charAt(0) == str2.charAt(0)) {
+            dis = 0;
+        } else {
+            dis = 1;
+        }
+
+        for(int i = 1; i < str1.length(); i++) {
+            if(str1.charAt(i) != str2.charAt(i)) {
+                dis += 2;
+            }
+        }
 
         return dis;
     }

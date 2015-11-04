@@ -89,6 +89,7 @@ public class MTSBOEC implements SystemConstant{
 
                         Map<String, Map<Integer, List<EventWithPhrase>>> eventsInTopic = future.get();
 
+                        log.info("Starting seralize events...");
                         for (Entry<String, Map<Integer, List<EventWithPhrase>>> eventsInFile : eventsInTopic.entrySet()) {
 
                             String key = eventsInFile.getKey();
@@ -97,7 +98,7 @@ public class MTSBOEC implements SystemConstant{
                             String filename = strs[1];
                             try {
                                 // 将事件抽取结果按照原文件的组织方式进行序列化存储
-                                SerializeUtil.writeObj(eventsInFile.getValue(), FileUtils.getFile(workDir + "/" + DIR_SERIALIZE_EVENTS + "/" + topic, filename));
+                                SerializeUtil.writeObj(eventsInFile.getValue(), FileUtils.getFile(workDir + "/" + DIR_SERIALIZE_EVENTS + "/" + topic, filename + SUFFIX_SERIALIZE_FILE));
 
                             } catch (IOException e) {
 
@@ -105,6 +106,7 @@ public class MTSBOEC implements SystemConstant{
 
                             }
                         }
+                        log.info("Finished seralize events.");
 
                     }
 
@@ -138,9 +140,9 @@ public class MTSBOEC implements SystemConstant{
             String cacheName = properties.getProperty("cacheName");
             String datasource = properties.getProperty("datasource");
             File eventDirFile = new File(workDir + "/" + DIR_SERIALIZE_EVENTS);
-            File[] topicDirFile = eventDirFile.listFiles();
+            File[] topicDirs = eventDirFile.listFiles();
             List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>();
-            for (File topicDir : topicDirFile) {
+            for (File topicDir : topicDirs) {
                 tasks.add(new CalculateSimilarityThread(topicDir.getAbsolutePath(), cacheName, datasource));
             }
             if(CollectionUtils.isNotEmpty(tasks)) {

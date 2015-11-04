@@ -103,6 +103,7 @@ public class FileUtil implements SystemConstant{
      * @return
      * @throws IOException
      */
+    @Deprecated
     public static List<EventWithWord> loadEvents(String filepath) throws IOException{
         List<EventWithWord> events = null;
         BufferedReader br = null;
@@ -146,7 +147,7 @@ public class FileUtil implements SystemConstant{
                             }else {
                                 log.error("当前事件类型不支持");
                             }
-                            events.add(new EventWithWord(leftWord, middleWord, rightWord, filename));
+                            events.add(new EventWithWord(leftWord, null, middleWord, rightWord, filename));
                         }
                     }
                 }

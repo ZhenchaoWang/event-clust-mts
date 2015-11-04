@@ -729,7 +729,7 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Map
      * @return
      * @throws IOException
      */
-    private List<ChunkPhrase> chunk(List<Word> words) throws IOException {
+    private List<ChunkPhrase> chunk(List<Word> words) throws Exception {
         List<ChunkPhrase> phrases = new ArrayList<ChunkPhrase>();
         int wordsCount = words.size();
         String[] toks = new String[wordsCount - 1]; // 忽略第一个单词Root
@@ -739,7 +739,13 @@ public class EventsExtractBasedOnGraphV2 implements SystemConstant, Callable<Map
             tags[i - 1] = words.get(i).getPos();
         }
         // 采用open nlp进行chunk
-        ChunkerModel chunkerModel = ModelLoader.getChunkerModel();
+        ChunkerModel chunkerModel;
+        try {
+            chunkerModel = ModelLoader.getChunkerModel();
+        } catch (Exception e) {
+            this.log.error("Failed to load chunk model!", e);
+            throw e;
+        }
         ChunkerME chunkerME = new ChunkerME(chunkerModel);
         Span[] spans = chunkerME.chunkAsSpans(toks, tags);
         for (Span span : spans) {

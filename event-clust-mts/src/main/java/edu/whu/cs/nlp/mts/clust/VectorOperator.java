@@ -7,17 +7,15 @@ import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import edu.whu.cs.nlp.mts.domain.EventType;
 import edu.whu.cs.nlp.mts.domain.EventWithPhrase;
-import edu.whu.cs.nlp.mts.domain.EventWithWord;
 import edu.whu.cs.nlp.mts.domain.Vector;
 import edu.whu.cs.nlp.mts.domain.Word;
 import edu.whu.cs.nlp.mts.sys.SystemConstant;
+import edu.whu.cs.nlp.mts.utils.CommonUtil;
 import edu.whu.cs.nlp.mts.utils.EhCacheUtil;
-import opennlp.tools.util.StringUtil;
 
 /**
  * 向量操作相关类
@@ -118,7 +116,7 @@ public class VectorOperator implements SystemConstant{
      * @return
      * @throws SQLException
      */
-    public List<Double[]> eventToVecs(EventWithWord event) {
+    /*public List<Double[]> eventToVecs(EventWithWord event) {
 
         List<Double[]> eventVecs = new ArrayList<Double[]>();
 
@@ -211,7 +209,7 @@ public class VectorOperator implements SystemConstant{
             }
         }
         return eventVecs;
-    }
+    }*/
 
     /**
      * 将事件转化成向量
@@ -305,7 +303,7 @@ public class VectorOperator implements SystemConstant{
      * @return
      * @throws SQLException
      */
-    public double eventsApproximationDegree(EventWithWord event1, EventWithWord event2) throws SQLException{
+    /*public double eventsApproximationDegree(EventWithWord event1, EventWithWord event2) throws SQLException{
         double approx = 0;  //默认以最大值来表示两个事件之间的最大值
         if(event1 != null && event2 != null){
             //计算得到两个事件的向量
@@ -369,7 +367,7 @@ public class VectorOperator implements SystemConstant{
             }
         }
         return approx;
-    }
+    }*/
 
     /**
      * 计算两个事件之间的近似度
@@ -381,8 +379,7 @@ public class VectorOperator implements SystemConstant{
      * @return
      * @throws SQLException
      */
-    public double eventsApproximationDegree(
-            List<Double[]> event_vecs_1, List<Double[]> event_vecs_2) throws SQLException{
+    public double eventsApproximationDegree(List<Double[]> event_vecs_1, List<Double[]> event_vecs_2) throws SQLException{
         double approx = 0;  //默认以最大值来表示两个事件之间的最大值
         if(event_vecs_1 == null || event_vecs_2 == null){
             return approx;
@@ -454,10 +451,13 @@ public class VectorOperator implements SystemConstant{
      * @return
      */
     private Float[] phraseVector(List<Word> phrase) {
+
         Float[] phraseVec = null;
 
         if(CollectionUtils.isEmpty(phrase)) {
+
             return phraseVec;
+
         }
 
         /**
@@ -465,6 +465,8 @@ public class VectorOperator implements SystemConstant{
          * 对短语中的非停用词的向量进行累加取平均
          */
         phraseVec = new Float[DIMENSION];
+        Arrays.fill(phraseVec, 0.0f);  // 初始以0填充
+        int count = 0;
         for (Word word : phrase) {
             if(STOPWORDS.contains(word.getLemma())) {
                 // 跳过停用词
@@ -473,18 +475,38 @@ public class VectorOperator implements SystemConstant{
             try {
                 List<Vector> vecs = this.ehCacheUtil.getVec(word);
                 if(CollectionUtils.isNotEmpty(vecs)) {
+                    int min = Integer.MAX_VALUE;
+                    Float[] vec = null;
                     for (Vector vector : vecs) {
-                        String similarWord = vector.getWord();
-                        StringUtils.
-                        //vector.floatVecs();
+                        // 以最相近的单词的向量作为当前词的词向量
+                        int dis = CommonUtil.strDistance(word.getName(), vector.getWord());
+                        if(dis < min) {
+                            min = dis;
+                            vec = vector.floatVecs();
+                        }
+                    }
+                    if(vec != null) {
+                        for(int i = 0; i < DIMENSION; i++) {
+                            phraseVec[i] += vec[i];
+                        }
+                        count++;
                     }
                 }
             } catch (SQLException e) {
-                this.log.error("", e);
+                this.log.error("Get vector error, word: " + word, e);
             }
         }
 
+        if(count == 0) {
+            return null;
+        }
+
+        for(int i = 0; i < DIMENSION; i++) {
+            phraseVec[i] /= count;
+        }
+
         return phraseVec;
+
     }
 
 }
