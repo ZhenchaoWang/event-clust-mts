@@ -46,7 +46,7 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
 
         int index = Math.max(this.topicDir.lastIndexOf("/"), this.topicDir.lastIndexOf("\\"));
         String topicName = this.topicDir.substring(index);
-        String workDir = this.topicDir.substring(0, index);
+        String workDir = this.topicDir.substring(0, index - DIR_SERIALIZE_EVENTS.length());
 
         int num = 0; // 事件编号
 
@@ -93,7 +93,7 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
             StringBuilder sb_nodes = new StringBuilder();
             for (Entry<Integer, NumedEventWithPhrase> entry : eventWithNums.entrySet()) {
                 NumedEventWithPhrase numedEventWithPhrase = entry.getValue();
-                sb_nodes.append(numedEventWithPhrase.getNum() + "\t" + numedEventWithPhrase.getEvent().toString() + LINE_SPLITER);
+                sb_nodes.append((numedEventWithPhrase.getNum() + 1) + "\t" + numedEventWithPhrase.getEvent().toString() + LINE_SPLITER);
             }
 
             try {
@@ -112,18 +112,20 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
         }
 
         // 计算事件之间的相似度，并保存成文件
-        for (int i = 0; i <= num; ++i) {
-            for (int j = i + 1; j <= num; ++j) {
+        for (int i = 0; i < num; ++i) {
+            for (int j = i + 1; j < num; ++j) {
                 try {
                     // 计算向量的余弦值
                     double approx = this.vectorOperator.cosineValue(eventWithNums.get(i).getVec(), eventWithNums.get(j).getVec());
                     if (approx >= 0 && approx <= 1) {
                         // 当前节点之间有边
-                        FileUtils.writeStringToFile(edgeFile, i + "\t" + j + "\t" + DECIMAL_FORMAT.format(approx) + LINE_SPLITER, DEFAULT_CHARSET, true);
-                        FileUtils.writeStringToFile(edgeFile, j + "\t" + i + "\t" + DECIMAL_FORMAT.format(approx) + LINE_SPLITER, DEFAULT_CHARSET, true);
+                        FileUtils.writeStringToFile(edgeFile, (i + 1) + "\t" + (j + 1) + "\t" + DECIMAL_FORMAT.format(approx) + LINE_SPLITER, DEFAULT_CHARSET, true);
+                        FileUtils.writeStringToFile(edgeFile, (j + 1) + "\t" + (i + 1) + "\t" + DECIMAL_FORMAT.format(approx) + LINE_SPLITER, DEFAULT_CHARSET, true);
                     }
-                } catch (IOException e) {
+                } catch (Exception e) {
+
                     log.error("计算事件相似度出错，事件1：" + eventWithNums.get(i).getEvent() + "， 事件2：" + eventWithNums.get(j).getEvent(), e);
+
                 }
             }
         }

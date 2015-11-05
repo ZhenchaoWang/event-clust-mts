@@ -236,7 +236,7 @@ public class VectorOperator implements SystemConstant{
             Float[] leftVec = this.phraseVector(eventWithPhrase.getLeftPhrases());
             Float[] middleVec = this.phraseVector(eventWithPhrase.getMiddlePhrases());
             Float[] rightVec = new Float[SystemConstant.DIMENSION];
-            Arrays.fill(rightVec, 1);
+            Arrays.fill(rightVec, 1.0f);
 
             eventVec = this.eventToVec(leftVec, middleVec, rightVec);
 
@@ -244,7 +244,7 @@ public class VectorOperator implements SystemConstant{
 
             //谓-宾，将主语的向量全部用1代替
             Float[] leftVec = new Float[SystemConstant.DIMENSION];
-            Arrays.fill(leftVec, 1);
+            Arrays.fill(leftVec, 1.0f);
             Float[] middleVec = this.phraseVector(eventWithPhrase.getMiddlePhrases());
             Float[] rightVec = this.phraseVector(eventWithPhrase.getRightPhrases());
 
