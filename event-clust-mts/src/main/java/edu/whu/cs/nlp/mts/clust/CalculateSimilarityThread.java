@@ -58,6 +58,9 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
         for (File eventFile : eventFiles) {
 
             try {
+
+                log.info("Loading serialize file: " + eventFile.getAbsolutePath());
+
                 @SuppressWarnings("unchecked")
                 Map<Integer, List<EventWithPhrase>> eventsInFile = (Map<Integer, List<EventWithPhrase>>) SerializeUtil.readObj(eventFile.getAbsolutePath());
 
@@ -91,13 +94,16 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
 
             // 将事件及其序号信息，写入文件
             StringBuilder sb_nodes = new StringBuilder();
+            StringBuilder sb_nodes_simplify = new StringBuilder();
             for (Entry<Integer, NumedEventWithPhrase> entry : eventWithNums.entrySet()) {
                 NumedEventWithPhrase numedEventWithPhrase = entry.getValue();
                 sb_nodes.append((numedEventWithPhrase.getNum() + 1) + "\t" + numedEventWithPhrase.getEvent().toString() + LINE_SPLITER);
+                sb_nodes_simplify.append((numedEventWithPhrase.getNum() + 1) + "\t" + numedEventWithPhrase.getEvent().toShortString() + LINE_SPLITER);
             }
 
             try {
                 FileUtils.writeStringToFile(FileUtils.getFile(workDir + "/" + DIR_NODES, topicName + ".node"), CommonUtil.cutLastLineSpliter(sb_nodes.toString()), SystemConstant.DEFAULT_CHARSET);
+                FileUtils.writeStringToFile(FileUtils.getFile(workDir + "/" + DIR_NODES, topicName + ".node.simplify"), CommonUtil.cutLastLineSpliter(sb_nodes_simplify.toString()), SystemConstant.DEFAULT_CHARSET);
             } catch (IOException e) {
                 log.error("写文件出错：" + workDir + "/" + DIR_NODES + "/" + topicName + ".node", e);
             }
@@ -110,6 +116,12 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
             // 如果已存在则删除
             edgeFile.delete();
         }
+        // 对相似值进行整数化之后的结果
+        File intEdgeFile = FileUtils.getFile(workDir + "/" + DIR_EDGES + "/int-val", topicName + ".edge");
+        if (intEdgeFile.exists()) {
+            // 如果已存在则删除
+            intEdgeFile.delete();
+        }
 
         // 计算事件之间的相似度，并保存成文件
         for (int i = 0; i < num; ++i) {
@@ -119,8 +131,13 @@ public class CalculateSimilarityThread implements Callable<Boolean>, SystemConst
                     double approx = this.vectorOperator.cosineValue(eventWithNums.get(i).getVec(), eventWithNums.get(j).getVec());
                     if (approx >= 0 && approx <= 1) {
                         // 当前节点之间有边
-                        FileUtils.writeStringToFile(edgeFile, (i + 1) + "\t" + (j + 1) + "\t" + DECIMAL_FORMAT.format(approx) + LINE_SPLITER, DEFAULT_CHARSET, true);
-                        FileUtils.writeStringToFile(edgeFile, (j + 1) + "\t" + (i + 1) + "\t" + DECIMAL_FORMAT.format(approx) + LINE_SPLITER, DEFAULT_CHARSET, true);
+                        approx = Float.parseFloat(DECIMAL_FORMAT.format(approx));
+                        FileUtils.writeStringToFile(edgeFile, (i + 1) + "\t" + (j + 1) + "\t" + approx + LINE_SPLITER, DEFAULT_CHARSET, true);
+                        /*FileUtils.writeStringToFile(edgeFile, (j + 1) + "\t" + (i + 1) + "\t" + approx + LINE_SPLITER, DEFAULT_CHARSET, true);*/
+                        // 对数据进行整数化（*1000）
+                        int intVal = (int) (approx * 1000);
+                        FileUtils.writeStringToFile(intEdgeFile, (i + 1) + "\t" + (j + 1) + "\t" + intVal + LINE_SPLITER, DEFAULT_CHARSET, true);
+                        /*FileUtils.writeStringToFile(intEdgeFile, (j + 1) + "\t" + (i + 1) + "\t" + intVal + LINE_SPLITER, DEFAULT_CHARSET, true);*/
                     }
                 } catch (Exception e) {
 

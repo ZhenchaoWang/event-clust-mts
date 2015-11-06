@@ -111,7 +111,7 @@ public class EventWithPhrase extends Event implements Serializable{
     @Override
     public String toShortString() {
         StringBuilder result = new StringBuilder();
-        final String SPLITER = ",";
+        final String SPLITER = "_";
         StringBuilder sb_left = new StringBuilder();
         if(CollectionUtils.isNotEmpty(this.leftPhrases)) {
             for (Word word : this.leftPhrases) {

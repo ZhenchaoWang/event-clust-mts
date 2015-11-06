@@ -159,7 +159,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>edu.whu.cs.nlp.mts.main.MTSBOEC</mainClass>
+                            <mainClass>edu.whu.cs.nlp.mts.summary.MTSBOEC</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -174,7 +174,7 @@
                     <!-- Specifies the configuration file of the assembly 
                         plugin -->
                     <descriptors>
-                        <descriptor>src/main/resources/package.xml</descriptor>
+                        <descriptor>../package.xml</descriptor>
                     </descriptors>
                 </configuration>
                 <executions>
